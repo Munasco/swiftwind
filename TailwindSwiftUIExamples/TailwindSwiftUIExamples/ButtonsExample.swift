@@ -3,66 +3,73 @@ import TailwindSwiftUI
 
 struct ButtonsExample: View {
     @State private var isPressed = false
+    private let sectionStyle = "w-full bg-neutral-900/60 rounded-xl p-4"
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 40) {
+            VStack(alignment: .leading, spacing: 32) {
                 Text("Button Examples")
-                    .tw("text-3xl font-bold text-slate-900")
-                    .padding(.top, 20)
-                
+                    .tw("text-3xl font-bold text-slate-100")
+
                 // Primary Buttons
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Primary Buttons")
-                        .tw("text-xl font-semibold text-slate-700")
+                        .tw("text-lg font-semibold text-slate-100 tracking-tight")
                     
-                    HStack(spacing: 12) {
+                    HStack() {
                         Text("Small")
-                            .tw("px-3 py-1 bg-blue-600 text-white rounded text-sm font-medium shadow-sm")
-                        
+                            .tw("px-3 py-2 text-slate-950 rounded-3xl text-sm font-semibold shadow-sm dark:bg-red-500 bg-yellow-500")
+                            .foregroundStyle(.white)
+                            .padding(.horizontal,  70)
                         Text("Medium")
                             .tw("px-4 py-2 bg-blue-600 text-white rounded-md font-semibold shadow-md")
                         
                         Text("Large")
                             .tw("px-6 py-3 bg-blue-600 text-white rounded-lg text-lg font-semibold shadow-lg")
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .tw(sectionStyle)
                 
                 // Secondary Buttons
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Secondary Buttons")
-                        .tw("text-xl font-semibold text-slate-700")
+                        .tw("text-lg font-semibold text-slate-100 tracking-tight")
                     
                     HStack(spacing: 12) {
                         Text("Cancel")
-                            .tw("px-4 py-2 bg-slate-200 text-slate-800 rounded-md font-semibold")
+                            .tw("px-4 py-2 bg-slate-200 text-slate-900 rounded-md font-semibold")
                         
                         Text("Save Draft")
-                            .tw("px-4 py-2 bg-slate-100 text-slate-700 rounded-md font-medium border border-slate-300")
+                            .tw("px-4 py-2 bg-white/5 text-slate-100 rounded-md font-medium border border-slate-700")
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .tw(sectionStyle)
                 
                 // Outline Buttons
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Outline Buttons")
-                        .tw("text-xl font-semibold text-slate-700")
+                        .tw("text-lg font-semibold text-slate-100 tracking-tight")
                     
                     HStack(spacing: 12) {
                         Text("Edit")
-                            .tw("px-4 py-2 bg-white text-blue-600 rounded-md font-semibold border-2 border-blue-600")
+                            .tw("px-4 py-2 bg-transparent text-blue-400 rounded-md font-semibold border-2 border-blue-500")
                         
                         Text("Delete")
-                            .tw("px-4 py-2 bg-white text-red-600 rounded-md font-semibold border-2 border-red-600")
+                            .tw("px-4 py-2 bg-transparent text-red-400 rounded-md font-semibold border-2 border-red-500")
                         
                         Text("Info")
-                            .tw("px-4 py-2 bg-white text-slate-600 rounded-md font-semibold border border-slate-300")
+                            .tw("px-4 py-2 bg-transparent text-slate-100 rounded-md font-semibold border border-slate-700")
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .tw(sectionStyle)
                 
                 // Color Variants
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Color Variants")
-                        .tw("text-xl font-semibold text-slate-700")
+                        .tw("text-lg font-semibold text-slate-100 tracking-tight")
                     
                     VStack(spacing: 12) {
                         HStack(spacing: 12) {
@@ -70,11 +77,12 @@ struct ButtonsExample: View {
                                 .tw("px-4 py-2 bg-green-600 text-white rounded-md font-semibold shadow-md")
                             
                             Text("Warning")
-                                .tw("px-4 py-2 bg-yellow-500 text-white rounded-md font-semibold shadow-md")
+                                .tw("px-4 py-2 bg-amber-500 text-slate-950 rounded-md font-semibold shadow-md")
                             
                             Text("Danger")
                                 .tw("px-4 py-2 bg-red-600 text-white rounded-md font-semibold shadow-md")
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         
                         HStack(spacing: 12) {
                             Text("Info")
@@ -86,13 +94,15 @@ struct ButtonsExample: View {
                             Text("Pink")
                                 .tw("px-4 py-2 bg-pink-600 text-white rounded-md font-semibold shadow-md")
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
+                .tw(sectionStyle)
                 
                 // Rounded Variants
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Rounded Variants")
-                        .tw("text-xl font-semibold text-slate-700")
+                        .tw("text-lg font-semibold text-slate-100 tracking-tight")
                     
                     HStack(spacing: 12) {
                         Text("Square")
@@ -104,12 +114,14 @@ struct ButtonsExample: View {
                         Text("Pill")
                             .tw("px-6 py-2 bg-blue-600 text-white rounded-full font-semibold")
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .tw(sectionStyle)
                 
                 // Shadow Variants
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Shadow Variants")
-                        .tw("text-xl font-semibold text-slate-700")
+                        .tw("text-lg font-semibold text-slate-100 tracking-tight")
                     
                     HStack(spacing: 12) {
                         Text("No Shadow")
@@ -124,32 +136,36 @@ struct ButtonsExample: View {
                         Text("Large")
                             .tw("px-4 py-2 bg-blue-600 text-white rounded-md font-semibold shadow-lg")
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .tw(sectionStyle)
                 
                 // Icon Buttons (using emoji)
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Icon Buttons")
-                        .tw("text-xl font-semibold text-slate-700")
+                        .tw("text-lg font-semibold text-slate-100 tracking-tight")
                     
                     HStack(spacing: 12) {
                         Text("❤️")
-                            .tw("px-3 py-2 bg-red-100 text-red-600 rounded-md text-xl")
+                            .tw("px-3 py-2 bg-red-500/20 text-red-200 rounded-md text-xl border border-red-500/40")
                         
                         Text("⭐️")
-                            .tw("px-3 py-2 bg-yellow-100 text-yellow-600 rounded-md text-xl")
+                            .tw("px-3 py-2 bg-amber-500/20 text-amber-100 rounded-md text-xl border border-amber-500/40")
                         
                         Text("🔔")
-                            .tw("px-3 py-2 bg-blue-100 text-blue-600 rounded-md text-xl")
+                            .tw("px-3 py-2 bg-cyan-500/20 text-cyan-100 rounded-md text-xl border border-cyan-500/40")
                         
                         Text("⚙️")
-                            .tw("px-3 py-2 bg-slate-100 text-slate-600 rounded-md text-xl")
+                            .tw("px-3 py-2 bg-slate-500/20 text-slate-100 rounded-md text-xl border border-slate-500/40")
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .tw(sectionStyle)
                 
                 // Disabled State
                 VStack(alignment: .leading, spacing: 16) {
                     Text("States")
-                        .tw("text-xl font-semibold text-slate-700")
+                        .tw("text-lg font-semibold text-slate-100 tracking-tight")
                     
                     HStack(spacing: 12) {
                         Text("Normal")
@@ -161,11 +177,16 @@ struct ButtonsExample: View {
                         Text("Loading...")
                             .tw("px-4 py-2 bg-blue-600 text-white rounded-md font-semibold opacity-75")
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .tw(sectionStyle)
             }
+            .frame(maxWidth: 720, alignment: .leading)
             .padding(24)
         }
-        .tw("bg-slate-50")
+        .background(
+            LinearGradient(colors: [.black, Color(hex: 0x0b1220)], startPoint: .topLeading, endPoint: .bottomTrailing)
+        )
     }
 }
 

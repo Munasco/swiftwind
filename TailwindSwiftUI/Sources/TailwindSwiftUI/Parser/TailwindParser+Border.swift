@@ -4,6 +4,9 @@ import SwiftUI
 extension TailwindModifier {
 
     func applyBorderClass(_ className: String, to view: AnyView) -> AnyView? {
+        let overlayRadius = resolvedOverlayCornerRadius()
+        let ringOffsetWidth = resolvedRingOffsetWidth()
+
         // Rounded
         if className.hasPrefix("rounded") {
             if let r = parseRadius(from: className) {
@@ -32,12 +35,12 @@ extension TailwindModifier {
         // Shadow
         if className.hasPrefix("shadow") && !className.hasPrefix("shadow-") {
             if let s = parseShadow(from: className) {
-                return AnyView(view.shadow(color: .black.opacity(0.1), radius: s.radius, y: s.y))
+                return AnyView(view.shadow(color: .black.opacity(0.25), radius: s.radius, y: s.y))
             }
         }
         if className.hasPrefix("shadow-") {
             if let s = parseShadow(from: className) {
-                return AnyView(view.shadow(color: .black.opacity(0.1), radius: s.radius, y: s.y))
+                return AnyView(view.shadow(color: .black.opacity(0.25), radius: s.radius, y: s.y))
             }
             // shadow-{color} is handled in ParserColors
             return nil
@@ -45,17 +48,17 @@ extension TailwindModifier {
 
         // Border width
         if className == "border" {
-            return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(Color.gray.opacity(0.3), lineWidth: 1)))
+            return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(Color.gray.opacity(0.3), lineWidth: 1)))
         }
         if className == "border-0" { return AnyView(view) }
         if className == "border-2" {
-            return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(Color.gray.opacity(0.3), lineWidth: 2)))
+            return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(Color.gray.opacity(0.3), lineWidth: 2)))
         }
         if className == "border-4" {
-            return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(Color.gray.opacity(0.3), lineWidth: 4)))
+            return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(Color.gray.opacity(0.3), lineWidth: 4)))
         }
         if className == "border-8" {
-            return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(Color.gray.opacity(0.3), lineWidth: 8)))
+            return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(Color.gray.opacity(0.3), lineWidth: 8)))
         }
 
         // Border sides
@@ -77,36 +80,36 @@ extension TailwindModifier {
         // Border color
         if className.hasPrefix("border-") {
             if let color = parseColor(from: className, prefix: "border-") {
-                return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(color, lineWidth: 1)))
+                return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(color, lineWidth: 1)))
             }
             if let w = extractNumber(from: className, prefix: "border-") {
-                return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(Color.gray.opacity(0.3), lineWidth: w)))
+                return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(Color.gray.opacity(0.3), lineWidth: w)))
             }
             return nil
         }
 
         // Ring
         if className == "ring" {
-            return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(Color.blue.opacity(0.5), lineWidth: 3)))
+            return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(Color.blue.opacity(0.5), lineWidth: 3 + ringOffsetWidth)))
         }
         if className == "ring-0" { return AnyView(view) }
         if className == "ring-1" {
-            return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(Color.blue.opacity(0.5), lineWidth: 1)))
+            return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(Color.blue.opacity(0.5), lineWidth: 1 + ringOffsetWidth)))
         }
         if className == "ring-2" {
-            return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(Color.blue.opacity(0.5), lineWidth: 2)))
+            return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(Color.blue.opacity(0.5), lineWidth: 2 + ringOffsetWidth)))
         }
         if className == "ring-4" {
-            return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(Color.blue.opacity(0.5), lineWidth: 4)))
+            return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(Color.blue.opacity(0.5), lineWidth: 4 + ringOffsetWidth)))
         }
         if className == "ring-8" {
-            return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(Color.blue.opacity(0.5), lineWidth: 8)))
+            return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(Color.blue.opacity(0.5), lineWidth: 8 + ringOffsetWidth)))
         }
         if className == "ring-inset" { return AnyView(view) }
         if className.hasPrefix("ring-offset-") { return AnyView(view) }
         if className.hasPrefix("ring-") {
             if let color = parseColor(from: className, prefix: "ring-") {
-                return AnyView(view.overlay(RoundedRectangle(cornerRadius: 0).stroke(color, lineWidth: 3)))
+                return AnyView(view.overlay(RoundedRectangle(cornerRadius: overlayRadius).stroke(color, lineWidth: 3 + ringOffsetWidth)))
             }
             return nil
         }
@@ -136,4 +139,21 @@ extension TailwindModifier {
     private func parseRadiusSuffix(_ name: String) -> CGFloat? {
         return parseRadius(from: name)
     }
+
+    private func resolvedRingOffsetWidth() -> CGFloat {
+        var width: CGFloat = 0
+        for cls in rawClasses {
+            guard cls.hasPrefix("ring-offset-") else { continue }
+            let token = cls.replacingOccurrences(of: "ring-offset-", with: "")
+            if token == "0" { width = 0; continue }
+            if let v = Double(token) {
+                width = CGFloat(v)
+            } else if cls.hasPrefix("ring-offset-["),
+                      let v = extractBracketValue(from: cls, prefix: "ring-offset-") {
+                width = v
+            }
+        }
+        return width
+    }
+
 }

@@ -44,6 +44,36 @@ struct ShowcaseApp: View {
                     Label("Effects", systemImage: "wand.and.stars")
                 }
                 .tag(4)
+
+            OverflowExample()
+                .tabItem {
+                    Label("Overflow", systemImage: "arrow.up.and.down.and.arrow.left.and.right")
+                }
+                .tag(5)
+
+            TWViewExample()
+                .tabItem {
+                    Label("TWView", systemImage: "rectangle.3.group")
+                }
+                .tag(6)
+
+            VariantsExample()
+                .tabItem {
+                    Label("Variants", systemImage: "circle.lefthalf.filled")
+                }
+                .tag(7)
+
+            RuntimeVariablesExample()
+                .tabItem {
+                    Label("Runtime", systemImage: "slider.horizontal.3")
+                }
+                .tag(8)
+
+            ShapeExample()
+                .tabItem {
+                    Label("Shape", systemImage: "square.on.circle")
+                }
+                .tag(9)
         }
     }
 }

@@ -144,7 +144,7 @@ struct TypographyExample: View {
                             Text("line-clamp-2")
                                 .tw("text-xs font-semibold text-slate-500 uppercase")
                             
-                            Text("This is a very long text that should be clamped to two lines and show an ellipsis at the end because it's too long to fit. It keeps going and going.")
+                            Text("This is a very long text that should be clamped to two lines and show an ellipsis at the end because it's too long to fit. It keeps going and going. nd because it's too long to fit. It keeps going and going ")
                                 .tw("text-sm text-slate-600 line-clamp-2")
                         }
                         

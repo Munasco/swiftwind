@@ -35,5 +35,6 @@ Package.resolved
 tailwindcss/
 
 # Playgrounds
+*.playground/
 *.playground/timeline.xctimeline
 *.playground/playground.xcworkspace

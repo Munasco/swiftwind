@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		DD8474912F3860C600224FBD /* TailwindSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = DD8474902F3860C600224FBD /* TailwindSwiftUI */; };
+		DD8474932F3860C600224FBD /* TailwindLinter in Frameworks */ = {isa = PBXBuildFile; productRef = DD8474922F3860C600224FBD /* TailwindLinter */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		DDBB8F962F381B3700FDAB2D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DD8474932F3860C600224FBD /* TailwindLinter in Frameworks */,
+				DD8474912F3860C600224FBD /* TailwindSwiftUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +119,8 @@
 			);
 			name = TailwindSwiftUIExamples;
 			packageProductDependencies = (
+				DD8474902F3860C600224FBD /* TailwindSwiftUI */,
+				DD8474922F3860C600224FBD /* TailwindLinter */,
 			);
 			productName = TailwindSwiftUIExamples;
 			productReference = DDBB8F862F381B3500FDAB2D /* TailwindSwiftUIExamples.app */;
@@ -195,6 +204,9 @@
 			);
 			mainGroup = DDBB8F7D2F381B3500FDAB2D;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				DD84748F2F3860C600224FBD /* XCLocalSwiftPackageReference "../TailwindSwiftUI" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DDBB8F872F381B3500FDAB2D /* Products */;
 			projectDirPath = "";
@@ -605,6 +617,24 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		DD84748F2F3860C600224FBD /* XCLocalSwiftPackageReference "../TailwindSwiftUI" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../TailwindSwiftUI;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		DD8474902F3860C600224FBD /* TailwindSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TailwindSwiftUI;
+		};
+		DD8474922F3860C600224FBD /* TailwindLinter */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TailwindLinter;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = DDBB8F7E2F381B3500FDAB2D /* Project object */;
 }

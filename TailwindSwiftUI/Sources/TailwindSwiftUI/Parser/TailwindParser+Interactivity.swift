@@ -4,6 +4,10 @@ import SwiftUI
 extension TailwindModifier {
 
     func applyInteractivityClass(_ className: String, to view: AnyView) -> AnyView? {
+        if isLayoutScopedInteractivityClass(className), TWViewType(from: Content.self) != .twView {
+            return nil
+        }
+
         // Cursor (macOS only for most)
         switch className {
         case "cursor-auto", "cursor-default", "cursor-pointer", "cursor-wait",
@@ -102,5 +106,20 @@ extension TailwindModifier {
         // Accent color (handled in ParserColors)
 
         return nil
+    }
+
+    private func isLayoutScopedInteractivityClass(_ className: String) -> Bool {
+        if className == "scroll-auto" || className == "scroll-smooth" { return true }
+        if className.hasPrefix("scroll-m-") || className.hasPrefix("scroll-mx-") ||
+           className.hasPrefix("scroll-my-") || className.hasPrefix("scroll-mt-") ||
+           className.hasPrefix("scroll-mr-") || className.hasPrefix("scroll-mb-") ||
+           className.hasPrefix("scroll-ml-") { return true }
+        if className.hasPrefix("scroll-p-") || className.hasPrefix("scroll-px-") ||
+           className.hasPrefix("scroll-py-") || className.hasPrefix("scroll-pt-") ||
+           className.hasPrefix("scroll-pr-") || className.hasPrefix("scroll-pb-") ||
+           className.hasPrefix("scroll-pl-") { return true }
+        if className.hasPrefix("snap-") { return true }
+        if className.hasPrefix("overscroll-") { return true }
+        return false
     }
 }

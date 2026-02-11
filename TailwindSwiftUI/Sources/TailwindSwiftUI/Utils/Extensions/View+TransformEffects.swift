@@ -16,7 +16,7 @@ public extension View {
 }
 
 // MARK: - Transform Rotate
-public extension View {
+public  extension View {
     func rotate(_ degrees: Int) -> some View {
         self.rotationEffect(.degrees(Double(degrees)))
     }

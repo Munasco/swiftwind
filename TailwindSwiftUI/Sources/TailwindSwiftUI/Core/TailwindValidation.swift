@@ -12,6 +12,7 @@ enum TWClassIntent {
 enum TWViewType {
     case text
     case image
+    case twView
     case container
     case other
 
@@ -21,6 +22,8 @@ enum TWViewType {
             self = .text
         } else if name.hasPrefix("Image") || name.hasPrefix("AsyncImage") {
             self = .image
+        } else if name.hasPrefix("TWView") {
+            self = .twView
         } else if name.hasPrefix("VStack") || name.hasPrefix("HStack") ||
                   name.hasPrefix("ZStack") || name.hasPrefix("LazyVStack") ||
                   name.hasPrefix("LazyHStack") || name.hasPrefix("LazyVGrid") ||
@@ -71,7 +74,14 @@ enum TailwindValidation {
            className.hasPrefix("font-") || className.hasPrefix("text-wrap") ||
            className == "text-nowrap" || className == "text-ellipsis" ||
            className.hasPrefix("whitespace-") || className.hasPrefix("break-") ||
-           className.hasPrefix("hyphens-") || className.hasPrefix("decoration-") {
+           className.hasPrefix("hyphens-") || className.hasPrefix("decoration-") ||
+           className == "antialiased" || className == "subpixel-antialiased" ||
+           className.hasPrefix("indent-") || className.hasPrefix("-indent-") ||
+           className.hasPrefix("align-") || className.hasPrefix("underline-offset-") ||
+           className == "normal-nums" || className == "ordinal" || className == "slashed-zero" ||
+           className == "lining-nums" || className == "oldstyle-nums" ||
+           className == "proportional-nums" || className == "tabular-nums" ||
+           className == "diagonal-fractions" || className == "stacked-fractions" {
             return .textOnly
         }
 
@@ -88,27 +98,32 @@ enum TailwindValidation {
         let intent = classIntent(className)
 
         switch (intent, viewType) {
-        // ERROR: Layout classes on Text
+        // Layout classes on Text/Image — no effect
         case (.layoutContainer, .text):
             return (.error, "'\(className)' is a layout/container class and has no effect on Text. Use it on VStack, HStack, or other containers.")
-
-        // ERROR: Layout classes on Image
         case (.layoutContainer, .image):
             return (.error, "'\(className)' is a layout/container class and has no effect on Image.")
+        case (.layoutContainer, .container):
+            return (.warning, "'\(className)' is scoped to TWView and is ignored on SwiftUI container types like VStack/HStack/ZStack.")
+        case (.layoutContainer, .other):
+            return (.warning, "'\(className)' is scoped to TWView and may be ignored on this view type.")
 
-        // WARN: Text-only classes on Image
+        // Text classes on Image — no effect
         case (.textOnly, .image):
-            return (.warning, "'\(className)' is a text class and has no effect on Image.")
+            return (.error, "'\(className)' is a text class and has no effect on Image.")
 
-        // WARN: Text-only classes on containers (actually propagates via environment, so just warn)
+        // Text classes on containers — font-* propagates via environment, rest doesn't
         case (.textOnly, .container):
-            // font-* and foregroundColor propagate, so don't warn for those
             if className.hasPrefix("font-") { return nil }
-            return (.warning, "'\(className)' is a text class. On containers it only works if child views inherit it.")
+            return (.error, "'\(className)' is a text class and has no effect on containers. Use it on Text directly.")
 
-        // WARN: Image-only on Text
+        // Image classes on Text — no effect
         case (.imageOnly, .text):
-            return (.warning, "'\(className)' is an image class and may not behave as expected on Text.")
+            return (.error, "'\(className)' is an image class and has no effect on Text.")
+
+        // Image classes on containers — no effect
+        case (.imageOnly, .container):
+            return (.error, "'\(className)' is an image class and has no effect on containers. Use it on Image directly.")
 
         default:
             return nil

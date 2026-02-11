@@ -3,14 +3,14 @@ import SwiftSyntaxMacrosTestSupport
 import Testing
 @testable import TailwindMacros
 
-let testMacros: [String: Macro.Type] = [
+@MainActor let testMacros: [String: Macro.Type] = [
     "tw": TailwindClassesMacro.self,
 ]
 
 // MARK: - Valid Classes
-@Suite("Macro: Valid Classes")
+@MainActor @Suite("Macro: Valid Classes")
 struct MacroValidTests {
-    @Test func spacingClasses() {
+     @Test func spacingClasses() {
         assertMacroExpansion(
             #"#tw("p-4 px-2 py-3 pt-1 pr-2 pb-3 pl-4 m-2 mx-auto")"#,
             expandedSource: #""p-4 px-2 py-3 pt-1 pr-2 pb-3 pl-4 m-2 mx-auto""#,
@@ -18,7 +18,7 @@ struct MacroValidTests {
         )
     }
 
-    @Test func typographyClasses() {
+     @Test func typographyClasses() {
         assertMacroExpansion(
             #"#tw("text-xl font-bold italic uppercase tracking-wide leading-relaxed")"#,
             expandedSource: #""text-xl font-bold italic uppercase tracking-wide leading-relaxed""#,
@@ -34,7 +34,7 @@ struct MacroValidTests {
         )
     }
 
-    @Test func layoutClasses() {
+    @MainActor @Test func layoutClasses() {
         assertMacroExpansion(
             #"#tw("flex flex-row justify-center items-start gap-4 hidden visible")"#,
             expandedSource: #""flex flex-row justify-center items-start gap-4 hidden visible""#,
@@ -123,8 +123,100 @@ struct MacroValidTests {
     }
 }
 
+// MARK: - New Valid Classes
+@MainActor @Suite("Macro: New Valid Classes")
+struct MacroNewValidTests {
+    @Test func fontVariantNumeric() {
+        assertMacroExpansion(
+            #"#tw("normal-nums tabular-nums ordinal slashed-zero lining-nums")"#,
+            expandedSource: #""normal-nums tabular-nums ordinal slashed-zero lining-nums""#,
+            macros: testMacros
+        )
+    }
+
+    @Test func dropShadowClasses() {
+        assertMacroExpansion(
+            #"#tw("drop-shadow drop-shadow-sm drop-shadow-md drop-shadow-lg drop-shadow-xl drop-shadow-2xl drop-shadow-none")"#,
+            expandedSource: #""drop-shadow drop-shadow-sm drop-shadow-md drop-shadow-lg drop-shadow-xl drop-shadow-2xl drop-shadow-none""#,
+            macros: testMacros
+        )
+    }
+
+    @Test func indentAndAlign() {
+        assertMacroExpansion(
+            #"#tw("indent-4 -indent-2 align-middle align-top")"#,
+            expandedSource: #""indent-4 -indent-2 align-middle align-top""#,
+            macros: testMacros
+        )
+    }
+
+    @Test func snapAndTouchClasses() {
+        assertMacroExpansion(
+            #"#tw("snap-start snap-end snap-center snap-x snap-y touch-auto touch-none touch-pinch-zoom touch-manipulation")"#,
+            expandedSource: #""snap-start snap-end snap-center snap-x snap-y touch-auto touch-none touch-pinch-zoom touch-manipulation""#,
+            macros: testMacros
+        )
+    }
+
+    @Test func borderSideClasses() {
+        assertMacroExpansion(
+            #"#tw("border-t border-b border-l border-r border-x border-y border-s border-e")"#,
+            expandedSource: #""border-t border-b border-l border-r border-x border-y border-s border-e""#,
+            macros: testMacros
+        )
+    }
+
+    @Test func shapePaintClasses() {
+        assertMacroExpansion(
+            #"#tw("fill-red-500 fill-none stroke-blue-500 stroke-2 stroke-none stroke-[3px]")"#,
+            expandedSource: #""fill-red-500 fill-none stroke-blue-500 stroke-2 stroke-none stroke-[3px]""#,
+            macros: testMacros
+        )
+    }
+
+    @Test func tableDisplayClasses() {
+        assertMacroExpansion(
+            #"#tw("table table-caption table-cell table-column table-row")"#,
+            expandedSource: #""table table-caption table-cell table-column table-row""#,
+            macros: testMacros
+        )
+    }
+
+    @Test func negativeMarginClasses() {
+        assertMacroExpansion(
+            #"#tw("-m-4 -mx-8 -my-2 -mt-1 -mr-2 -mb-3 -ml-4")"#,
+            expandedSource: #""-m-4 -mx-8 -my-2 -mt-1 -mr-2 -mb-3 -ml-4""#,
+            macros: testMacros
+        )
+    }
+
+    @Test func skewTransforms() {
+        assertMacroExpansion(
+            #"#tw("skew-x-3 skew-y-6 -skew-x-12 -skew-y-3")"#,
+            expandedSource: #""skew-x-3 skew-y-6 -skew-x-12 -skew-y-3""#,
+            macros: testMacros
+        )
+    }
+
+    @Test func platformVariantsAreAccepted() {
+        assertMacroExpansion(
+            #"#tw("ios:bg-red-500 macos:p-8 dark:macos:text-white")"#,
+            expandedSource: #""ios:bg-red-500 macos:p-8 dark:macos:text-white""#,
+            macros: testMacros
+        )
+    }
+
+    @Test func activeVariantsAreAccepted() {
+        assertMacroExpansion(
+            #"#tw("active:bg-red-500 group-active:text-white peer-active:bg-blue-500")"#,
+            expandedSource: #""active:bg-red-500 group-active:text-white peer-active:bg-blue-500""#,
+            macros: testMacros
+        )
+    }
+}
+
 // MARK: - Invalid Classes
-@Suite("Macro: Invalid Classes")
+@MainActor @Suite("Macro: Invalid Classes")
 struct MacroInvalidTests {
     @Test func singleUnknownClass() {
         assertMacroExpansion(
@@ -180,6 +272,28 @@ struct MacroInvalidTests {
             diagnostics: [
                 DiagnosticSpec(message: "Unknown Tailwind class 'display:flex'", line: 1, column: 5, severity: .warning),
                 DiagnosticSpec(message: "Unknown Tailwind class 'color:red'", line: 1, column: 5, severity: .warning),
+            ],
+            macros: testMacros
+        )
+    }
+
+    @Test func colorVariableMustUseColorPrefix() {
+        assertMacroExpansion(
+            #"#tw("bg-(--brand-bg) fill-var(--shape-fill)")"#,
+            expandedSource: #""bg-(--brand-bg) fill-var(--shape-fill)""#,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "Class 'bg-(--brand-bg)' uses '--brand-bg'. Color vars must be named '--color-*' (or '--tw-color-*').",
+                    line: 1,
+                    column: 5,
+                    severity: .warning
+                ),
+                DiagnosticSpec(
+                    message: "Class 'fill-var(--shape-fill)' uses '--shape-fill'. Color vars must be named '--color-*' (or '--tw-color-*').",
+                    line: 1,
+                    column: 5,
+                    severity: .warning
+                ),
             ],
             macros: testMacros
         )

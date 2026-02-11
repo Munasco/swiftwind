@@ -6,7 +6,7 @@ struct ColorPaletteExample: View {
         ScrollView {
             VStack(spacing: 32) {
                 Text("TailwindSwiftUI Color Palette")
-                    .tw("text-3xl font-bold text-slate-900")
+                    .tw("text-3xl font-bold text-zinc-50")
                     .padding(.top, 20)
                 
                 // Slate

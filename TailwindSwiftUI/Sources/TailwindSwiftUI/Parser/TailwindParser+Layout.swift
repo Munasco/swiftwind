@@ -4,6 +4,16 @@ import SwiftUI
 extension TailwindModifier {
 
     func applyLayoutClass(_ className: String, to view: AnyView) -> AnyView? {
+        // Most layout-affecting utilities are intentionally scoped to TWView only.
+        // Overflow is useful on regular SwiftUI containers too, so allow it globally.
+        if TWViewType(from: Content.self) != .twView, !className.hasPrefix("overflow-") {
+            return nil
+        }
+
+        // Container
+        if className == "container" {
+            return AnyView(view.frame(maxWidth: .infinity, alignment: .center))
+        }
 
         // Display
         switch className {
@@ -34,6 +44,22 @@ extension TailwindModifier {
         }
 
         // Inset (top/right/bottom/left)
+        if className.hasPrefix("inset-x-") {
+            let val = className.replacingOccurrences(of: "inset-x-", with: "")
+            if val == "0" || val == "auto" || val == "full" { return AnyView(view) }
+            if let v = extractNumber(from: className, prefix: "inset-x-") {
+                return AnyView(view.offset(x: spacingValue(v)))
+            }
+            return AnyView(view)
+        }
+        if className.hasPrefix("inset-y-") {
+            let val = className.replacingOccurrences(of: "inset-y-", with: "")
+            if val == "0" || val == "auto" || val == "full" { return AnyView(view) }
+            if let v = extractNumber(from: className, prefix: "inset-y-") {
+                return AnyView(view.offset(y: spacingValue(v)))
+            }
+            return AnyView(view)
+        }
         if className.hasPrefix("inset-") {
             let val = className.replacingOccurrences(of: "inset-", with: "")
             if val == "0" { return AnyView(view) }
@@ -105,6 +131,32 @@ extension TailwindModifier {
         case "shrink", "shrink-1": return AnyView(view)
         case "shrink-0": return AnyView(view.fixedSize())
         default: break
+        }
+
+        // Flex basis
+        if className.hasPrefix("basis-") {
+            let val = className.replacingOccurrences(of: "basis-", with: "")
+            switch val {
+            case "auto":
+                return AnyView(view)
+            case "full":
+                return AnyView(view.frame(maxWidth: .infinity))
+            case "1/2":
+                return AnyView(view.frame(maxWidth: .infinity).scaleEffect(x: 0.5, y: 1))
+            case "1/3":
+                return AnyView(view.frame(maxWidth: .infinity).scaleEffect(x: 0.333, y: 1))
+            case "2/3":
+                return AnyView(view.frame(maxWidth: .infinity).scaleEffect(x: 0.667, y: 1))
+            case "1/4":
+                return AnyView(view.frame(maxWidth: .infinity).scaleEffect(x: 0.25, y: 1))
+            case "3/4":
+                return AnyView(view.frame(maxWidth: .infinity).scaleEffect(x: 0.75, y: 1))
+            default:
+                if let v = extractNumber(from: className, prefix: "basis-") {
+                    return AnyView(view.frame(width: spacingValue(v)))
+                }
+            }
+            return AnyView(view)
         }
 
         // Order
@@ -197,20 +249,71 @@ extension TailwindModifier {
         if className.hasPrefix("grid-flow-") {
             return AnyView(view)
         }
+        if className.hasPrefix("border-spacing-") {
+            return AnyView(view)
+        }
 
         // Overflow
         switch className {
-        case "overflow-auto": return AnyView(view)
+        case "overflow-auto":
+            return AnyView(
+                TWOverflowScrollContainer(
+                    axis: .both,
+                    content: AnyView(view.fixedSize(horizontal: true, vertical: true))
+                )
+            )
         case "overflow-hidden": return AnyView(view.clipped())
         case "overflow-clip": return AnyView(view.clipped())
         case "overflow-visible": return AnyView(view)
-        case "overflow-scroll": return AnyView(view)
+        case "overflow-scroll":
+            return AnyView(
+                TWOverflowScrollContainer(
+                    axis: .both,
+                    content: AnyView(view.fixedSize(horizontal: true, vertical: true))
+                )
+            )
         case "overflow-x-auto", "overflow-x-hidden", "overflow-x-clip",
-             "overflow-x-visible", "overflow-x-scroll":
+             "overflow-x-visible":
+            if className == "overflow-x-auto" {
+                return AnyView(
+                    TWOverflowScrollContainer(
+                        axis: .horizontal,
+                        content: AnyView(view.fixedSize(horizontal: true, vertical: false))
+                    )
+                )
+            }
+            if className == "overflow-x-hidden" || className == "overflow-x-clip" {
+                return AnyView(view.clipped())
+            }
             return AnyView(view)
+        case "overflow-x-scroll":
+            return AnyView(
+                TWOverflowScrollContainer(
+                    axis: .horizontal,
+                    content: AnyView(view.fixedSize(horizontal: true, vertical: false))
+                )
+            )
         case "overflow-y-auto", "overflow-y-hidden", "overflow-y-clip",
-             "overflow-y-visible", "overflow-y-scroll":
+             "overflow-y-visible":
+            if className == "overflow-y-auto" {
+                return AnyView(
+                    TWOverflowScrollContainer(
+                        axis: .vertical,
+                        content: AnyView(view.fixedSize(horizontal: false, vertical: true))
+                    )
+                )
+            }
+            if className == "overflow-y-hidden" || className == "overflow-y-clip" {
+                return AnyView(view.clipped())
+            }
             return AnyView(view)
+        case "overflow-y-scroll":
+            return AnyView(
+                TWOverflowScrollContainer(
+                    axis: .vertical,
+                    content: AnyView(view.fixedSize(horizontal: false, vertical: true))
+                )
+            )
         default: break
         }
 

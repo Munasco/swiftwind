@@ -190,7 +190,36 @@ extension TailwindModifier {
         case "aspect-video": return AnyView(view.aspectRatio(16/9, contentMode: .fit))
         default: break
         }
+        if className.hasPrefix("aspect-") {
+            let token = className.replacingOccurrences(of: "aspect-", with: "")
 
+            if let ratio = parseAspectRatioToken(token) {
+                return AnyView(view.aspectRatio(ratio, contentMode: .fit))
+            }
+
+            let themeVarName = "--aspect-\(token)"
+            if let raw = TailwindRuntime.rawVariable(themeVarName, colorScheme: currentColorScheme()),
+               let ratio = parseAspectRatioToken(raw.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                return AnyView(view.aspectRatio(ratio, contentMode: .fit))
+            }
+            return AnyView(view)
+        }
+
+        return nil
+    }
+
+    private func parseAspectRatioToken(_ token: String) -> CGFloat? {
+        let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        let parts = trimmed.split(separator: "/", maxSplits: 1).map(String.init)
+        if parts.count == 2,
+           let lhs = Double(parts[0].trimmingCharacters(in: .whitespaces)),
+           let rhs = Double(parts[1].trimmingCharacters(in: .whitespaces)),
+           rhs != 0 {
+            return CGFloat(lhs / rhs)
+        }
+        if let v = Double(trimmed), v > 0 {
+            return CGFloat(v)
+        }
         return nil
     }
 }

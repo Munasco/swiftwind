@@ -4,6 +4,26 @@ import SwiftUI
 extension TailwindModifier {
 
     func applySpacingClass(_ className: String, to view: AnyView) -> AnyView? {
+        // NativeWind-style safe area utilities.
+        switch className {
+        case "p-safe":
+            return AnyView(applySafeAreaPadding(to: view, edges: .all))
+        case "px-safe":
+            return AnyView(applySafeAreaPadding(to: view, edges: .horizontal))
+        case "py-safe":
+            return AnyView(applySafeAreaPadding(to: view, edges: .vertical))
+        case "pt-safe":
+            return AnyView(applySafeAreaPadding(to: view, edges: .top))
+        case "pr-safe":
+            return AnyView(applySafeAreaPadding(to: view, edges: .trailing))
+        case "pb-safe":
+            return AnyView(applySafeAreaPadding(to: view, edges: .bottom))
+        case "pl-safe":
+            return AnyView(applySafeAreaPadding(to: view, edges: .leading))
+        default:
+            break
+        }
+
         // Padding
         if className.hasPrefix("p-") && !className.hasPrefix("pl-") && !className.hasPrefix("pr-") && !className.hasPrefix("pt-") && !className.hasPrefix("pb-") && !className.hasPrefix("px-") && !className.hasPrefix("py-") {
             if let v = extractNumber(from: className, prefix: "p-") {
@@ -175,5 +195,14 @@ extension TailwindModifier {
         }
 
         return nil
+    }
+
+    @ViewBuilder
+    private func applySafeAreaPadding(to view: AnyView, edges: Edge.Set) -> some View {
+        if #available(iOS 17.0, macOS 14.0, tvOS 17.0, watchOS 10.0, visionOS 1.0, *) {
+            view.safeAreaPadding(edges)
+        } else {
+            view
+        }
     }
 }

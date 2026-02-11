@@ -136,6 +136,17 @@ Master app with all examples in tabs.
 
 Run this to browse all examples interactively.
 
+---
+
+### 🧪 VariantsExample.swift
+State and selector variants (`dark:`, `hover:`, `active:`, `group-*`, `peer-*`).
+
+### 🧪 RuntimeVariablesExample.swift
+Runtime token/css-variable registration and utility aliases via `initialize(entries:)`.
+
+### 🧪 ShapeExample.swift
+Shape paint examples for `fill-*`, `stroke-*`, and `stroke-{n}`.
+
 ## Quick Start
 
 1. **In Xcode:**

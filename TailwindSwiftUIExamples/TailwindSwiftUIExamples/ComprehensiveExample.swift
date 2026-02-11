@@ -18,7 +18,7 @@ struct ComprehensiveExample: View {
                     HStack(gap: 3) {
                         Text("Get Started")
                             .tw("px-6 py-3 bg-blue-600 text-white rounded-lg shadow-lg font-semibold")
-                            .scale(isHovered ? 105 : 100)
+
                         
                         Text("Documentation")
                             .tw("px-6 py-3 bg-slate-200 text-slate-800 rounded-lg font-semibold")
@@ -76,12 +76,10 @@ struct ComprehensiveExample: View {
                     HStack(gap: 3) {
                         Text("Scale")
                             .tw("w-20 h-20 bg-blue-500 text-white font-semibold rounded-lg flex items-center justify-center shadow-md")
-                            .scale(125)
                         
                         Text("Rotate")
                             .tw("w-20 h-20 bg-green-500 text-white font-semibold rounded-lg flex items-center justify-center shadow-md")
-                            .rotate(45)
-                        
+                           
                         Text("Blur")
                             .tw("w-20 h-20 bg-purple-500 text-white font-semibold rounded-lg shadow-md blur-md")
                     }

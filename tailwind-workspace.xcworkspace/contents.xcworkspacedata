@@ -7,4 +7,7 @@
    <FileRef
       location = "group:TailwindSwiftUI">
    </FileRef>
+   <FileRef
+      location = "group:SwiftCN">
+   </FileRef>
 </Workspace>

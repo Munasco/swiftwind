@@ -55,8 +55,7 @@ struct LayoutExample: View {
                             )
                         
                         Rectangle()
-                            .frame(maxWidth: .infinity)
-                            .tw("h-20 bg-purple-500 rounded")
+                            .tw("h-20 bg-purple-500 rounded w-full")
                             .overlay(
                                 Text("w-full × 80pt")
                                     .tw("text-sm text-white font-semibold")
@@ -75,26 +74,25 @@ struct LayoutExample: View {
                             Box(label: "2")
                             Box(label: "3")
                         }
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .tw("p-3 bg-slate-100 rounded")
                         .overlay(
                             Text("justify-start")
                                 .tw("text-xs text-slate-500")
-                                .position(x: 60, y: -10)
+                                .position(x: 60, y: 0)
                         )
                         
                         HStack {
-                            Spacer()
                             Box(label: "1")
                             Box(label: "2")
                             Box(label: "3")
                         }
-                        .frame(maxWidth: .infinity)
-                        .tw("p-3 bg-slate-100 rounded")
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .tw("p-3 bg-red-500 rounded")
                         .overlay(
                             Text("justify-end")
                                 .tw("text-xs text-slate-500")
-                                .position(x: 55, y: -10)
+                                .position(x: 60, y: 0)
                         )
                         
                         HStack {
@@ -109,7 +107,7 @@ struct LayoutExample: View {
                         .overlay(
                             Text("justify-center")
                                 .tw("text-xs text-slate-500")
-                                .position(x: 60, y: -10)
+                                .position(x: 60, y: 0)
                         )
                     }
                 }

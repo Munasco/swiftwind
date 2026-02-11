@@ -160,6 +160,59 @@ extension TailwindModifier {
         default: break
         }
 
+        // Antialiasing (font smoothing)
+        switch className {
+        case "antialiased": return AnyView(view) // Default on Apple platforms
+        case "subpixel-antialiased": return AnyView(view)
+        default: break
+        }
+
+        // Font variant numeric
+        switch className {
+        case "normal-nums": return AnyView(view)
+        case "ordinal": return AnyView(view.monospacedDigit())
+        case "slashed-zero": return AnyView(view.monospacedDigit())
+        case "lining-nums": return AnyView(view.monospacedDigit())
+        case "oldstyle-nums": return AnyView(view)
+        case "proportional-nums": return AnyView(view)
+        case "tabular-nums": return AnyView(view.monospacedDigit())
+        case "diagonal-fractions": return AnyView(view)
+        case "stacked-fractions": return AnyView(view)
+        default: break
+        }
+
+        // Text indent
+        if className.hasPrefix("indent-") {
+            if let v = extractNumber(from: className, prefix: "indent-") {
+                return AnyView(view.padding(.leading, spacingValue(v)))
+            }
+            return nil
+        }
+        if className.hasPrefix("-indent-") {
+            if let v = extractNumber(from: className, prefix: "-indent-") {
+                return AnyView(view.padding(.leading, -spacingValue(v)))
+            }
+            return nil
+        }
+
+        // Vertical align (approximated via offset for inline contexts)
+        switch className {
+        case "align-baseline": return AnyView(view)
+        case "align-top": return AnyView(view.frame(maxHeight: .infinity, alignment: .top))
+        case "align-middle": return AnyView(view.frame(maxHeight: .infinity, alignment: .center))
+        case "align-bottom": return AnyView(view.frame(maxHeight: .infinity, alignment: .bottom))
+        case "align-text-top": return AnyView(view.frame(maxHeight: .infinity, alignment: .top))
+        case "align-text-bottom": return AnyView(view.frame(maxHeight: .infinity, alignment: .bottom))
+        case "align-sub": return AnyView(view.baselineOffset(-4))
+        case "align-super": return AnyView(view.baselineOffset(8))
+        default: break
+        }
+
+        // Underline offset
+        if className.hasPrefix("underline-offset-") {
+            return AnyView(view)
+        }
+
         // Content (for pseudo-elements - not applicable in SwiftUI)
         if className.hasPrefix("content-") {
             return AnyView(view)

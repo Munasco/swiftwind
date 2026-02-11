@@ -6,7 +6,11 @@ import os
 /// with correct log levels (fault for errors, default for warnings).
 public enum TailwindLogger {
     /// Set to false to silence all diagnostics
+    #if DEBUG
     nonisolated(unsafe) public static var enabled: Bool = true
+    #else
+    nonisolated(unsafe) public static var enabled: Bool = false
+    #endif
 
     private static let logger = Logger(subsystem: "com.tailwindswiftui", category: "validation")
 
