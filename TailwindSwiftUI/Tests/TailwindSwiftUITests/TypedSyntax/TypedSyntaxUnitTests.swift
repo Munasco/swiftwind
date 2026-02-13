@@ -33,6 +33,12 @@ struct TailwindTypedSyntaxUnitTests {
             .tw(typed)
     }
 
+    @Test func typedSugarFunctionsAndTintCompile() {
+        _ = Text("Sugar")
+            .tw(.bg(.red500), text(.slate100))
+            .tint(.pink50)
+    }
+
     @Test func typedColorBuildersGenerateExpectedTokens() {
         let modifier = Text("Token colors")
             .tw(

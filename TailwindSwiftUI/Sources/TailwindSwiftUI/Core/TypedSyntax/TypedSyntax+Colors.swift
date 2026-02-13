@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 public struct TailwindColorToken: RawRepresentable, Hashable, Sendable, ExpressibleByStringLiteral {
     public let rawValue: String
@@ -110,6 +111,78 @@ public extension TailwindTypedClass {
 
     static func placeholder(_ color: TailwindColorToken) -> TailwindTypedClass {
         TailwindTypedClass("placeholder-\(color.rawValue)")
+    }
+}
+
+// MARK: - Free-function sugar for typed class lists
+// Allows: .tw(.bg(.red500), text(.slate100))
+@inlinable
+public func bg(_ color: TailwindColorToken) -> TailwindTypedClass {
+    .bg(color)
+}
+
+@inlinable
+public func text(_ color: TailwindColorToken) -> TailwindTypedClass {
+    .text(color)
+}
+
+@inlinable
+public func border(_ color: TailwindColorToken) -> TailwindTypedClass {
+    .border(color)
+}
+
+@inlinable
+public func ring(_ color: TailwindColorToken) -> TailwindTypedClass {
+    .ring(color)
+}
+
+@inlinable
+public func fill(_ color: TailwindColorToken) -> TailwindTypedClass {
+    .fill(color)
+}
+
+@inlinable
+public func stroke(_ color: TailwindColorToken) -> TailwindTypedClass {
+    .stroke(color)
+}
+
+@inlinable
+public func accent(_ color: TailwindColorToken) -> TailwindTypedClass {
+    .accent(color)
+}
+
+@inlinable
+public func caret(_ color: TailwindColorToken) -> TailwindTypedClass {
+    .caret(color)
+}
+
+@inlinable
+public func decoration(_ color: TailwindColorToken) -> TailwindTypedClass {
+    .decoration(color)
+}
+
+@inlinable
+public func placeholder(_ color: TailwindColorToken) -> TailwindTypedClass {
+    .placeholder(color)
+}
+
+public extension View {
+    /// Tailwind color-token tint helper.
+    /// Usage: `.tint(.pink50)`
+    func tint(_ color: TailwindColorToken) -> some View {
+        if let resolved = TailwindColorResolver.parseRuntimeColorValue(color.rawValue) {
+            return AnyView(self.tint(resolved))
+        }
+
+        let raw = color.rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if raw.hasPrefix("["), raw.hasSuffix("]") {
+            let inner = String(raw.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+            if let resolved = TailwindColorResolver.parseRuntimeColorValue(inner) {
+                return AnyView(self.tint(resolved))
+            }
+        }
+
+        return AnyView(self)
     }
 }
 
