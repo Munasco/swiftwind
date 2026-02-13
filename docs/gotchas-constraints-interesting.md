@@ -135,7 +135,7 @@ Platform-gated variants are supported:
 
 You can initialize:
 
-- theme tokens (typed by kind)
+- theme tokens (by token kind)
 - raw CSS variable entries (with `cssProperty`)
 - utility aliases
 

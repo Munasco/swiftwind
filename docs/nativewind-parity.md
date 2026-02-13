@@ -66,3 +66,17 @@ Passing tests validate:
 - web-only inventory is marked web-only
 - full-support inventory compiles through `.tw(...)`
 - parity gap backlog remains empty
+
+## Typed Syntax Location
+
+NativeWind parity work for Swift-style class APIs is maintained in:
+
+- `TailwindSwiftUI/Sources/TailwindSwiftUI/Core/TypedSyntax/TypedSyntax.swift`
+- `TailwindSwiftUI/Sources/TailwindSwiftUI/Core/TypedSyntax/TypedSyntax+Colors.swift`
+
+Example:
+
+```swift
+Text("Badge")
+    .tw(.bg(.oklch(0.16, 23, 23)), .text(.white))
+```
