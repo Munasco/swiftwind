@@ -5,6 +5,7 @@ import UIKit
 #if canImport(AppKit)
 import AppKit
 #endif
+import TailwindLinter
 
 @resultBuilder
 public enum TailwindClassBuilder {
@@ -80,6 +81,8 @@ public struct TailwindModifier<Content: View>: View {
     @Environment(\.twGroupHovered) private var twGroupHovered
     @Environment(\.twGroupActive) private var twGroupActive
     @Environment(\.twPeerStates) private var twPeerStates
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.twPositionMode) var twPositionMode
     @State private var isHovered = false
     @State private var isPressed = false
     @State private var isInsideNativeScrollView = false
@@ -93,7 +96,8 @@ public struct TailwindModifier<Content: View>: View {
         // Sort to match CSS-like behavior independent of class string ordering:
         // 1) box-model priority (text/font → sizing → padding → background → clip → border/ring → shadow → blur)
         // 2) unvarianted utilities first, variant utilities second (so dark:/hover:/etc. override base when active)
-        // 3) stable original order as final tiebreaker
+        // 3) reverse original order as final tiebreaker so later classes in
+        //    the same scope win (Tailwind-like cascade behavior).
         self.classes = raw.enumerated()
             .sorted { lhs, rhs in
                 let left = Self.classSortKey(lhs.element, originalIndex: lhs.offset)
@@ -105,46 +109,23 @@ public struct TailwindModifier<Content: View>: View {
     }
 
     fileprivate static func warnConflictingClasses(_ classes: [String]) {
-        var seen: [String: String] = [:]
-
-        for token in classes {
-            let parsed = parseVariantsStatic(from: token)
-            guard let conflictGroup = conflictGroup(for: parsed.baseClass) else { continue }
-
-            let variantScope = parsed.variants.joined(separator: ":")
-            let key = "\(variantScope)|\(conflictGroup)"
-
-            if let previous = seen[key], previous != parsed.baseClass {
-                let scopeLabel = variantScope.isEmpty ? "base scope" : "variant scope '\(variantScope)'"
-                TailwindLogger.warn("Conflicting Tailwind classes '\(previous)' and '\(parsed.baseClass)' in the same \(scopeLabel). Last one wins.")
-            } else if seen[key] == nil {
-                seen[key] = parsed.baseClass
-            }
+        for conflict in TailwindConflictValidation.detectConflicts(in: classes) {
+            TailwindLogger.warn(
+                TailwindValidationMessages.conflictingStyles(
+                    previous: conflict.previous,
+                    current: conflict.current,
+                    scope: conflict.scope
+                )
+            )
         }
     }
 
     fileprivate static func hasCrossScopeConflicts(previous: [String], incoming: [String]) -> Bool {
-        var previousSeen: [String: String] = [:]
+        TailwindConflictValidation.hasCrossScopeConflicts(previous: previous, incoming: incoming)
+    }
 
-        for token in previous {
-            let parsed = parseVariantsStatic(from: token)
-            guard let conflictGroup = conflictGroup(for: parsed.baseClass) else { continue }
-            let key = "\(parsed.variants.joined(separator: ":"))|\(conflictGroup)"
-            if previousSeen[key] == nil {
-                previousSeen[key] = parsed.baseClass
-            }
-        }
-
-        for token in incoming {
-            let parsed = parseVariantsStatic(from: token)
-            guard let conflictGroup = conflictGroup(for: parsed.baseClass) else { continue }
-            let key = "\(parsed.variants.joined(separator: ":"))|\(conflictGroup)"
-            if let previousClass = previousSeen[key], previousClass != parsed.baseClass {
-                return true
-            }
-        }
-
-        return false
+    static func conflictGroup(for baseClass: String) -> String? {
+        TailwindConflictValidation.conflictGroup(for: baseClass)
     }
 
     /// Lower number = applied first (innermost modifier).
@@ -162,6 +143,12 @@ public struct TailwindModifier<Content: View>: View {
            cls.hasPrefix("min-w-") || cls.hasPrefix("max-w-") ||
            cls.hasPrefix("min-h-") || cls.hasPrefix("max-h-") ||
            cls.hasPrefix("aspect-") { return 1 }
+        // Position mode should be established before inset/top/left offsets
+        if cls == "static" || cls == "relative" || cls == "absolute" || cls == "fixed" || cls == "sticky" { return 1 }
+        if cls.hasPrefix("inset-") || cls.hasPrefix("top-") || cls.hasPrefix("right-") ||
+           cls.hasPrefix("bottom-") || cls.hasPrefix("left-") || cls.hasPrefix("start-") || cls.hasPrefix("end-") {
+            return 2
+        }
         // Padding — must come before background so bg covers padding area
         if cls.hasPrefix("p-") || cls.hasPrefix("px-") || cls.hasPrefix("py-") ||
            cls.hasPrefix("pt-") || cls.hasPrefix("pr-") || cls.hasPrefix("pb-") ||
@@ -184,151 +171,12 @@ public struct TailwindModifier<Content: View>: View {
         let parsed = parseVariantMetadata(cls)
         let priority = classPriority(parsed.baseClass)
         let variantPhase = parsed.variantCount > 0 ? 1 : 0
-        return (priority, variantPhase, originalIndex)
+        return (priority, variantPhase, -originalIndex)
     }
 
     private static func parseVariantMetadata(_ className: String) -> (baseClass: String, variantCount: Int) {
-        let parts = splitOnTopLevelColonsStatic(className)
-        guard parts.count > 1, let base = parts.last else {
-            return (className, 0)
-        }
-        return (base, parts.count - 1)
-    }
-
-    fileprivate static func parseVariantsStatic(from className: String) -> (variants: [String], baseClass: String) {
-        let parts = splitOnTopLevelColonsStatic(className)
-        guard parts.count > 1, let base = parts.last else {
-            return ([], className)
-        }
-        return (Array(parts.dropLast()), base)
-    }
-
-    static func conflictGroup(for baseClass: String) -> String? {
-        if baseClass.hasPrefix("bg-"),
-           !baseClass.hasPrefix("bg-opacity-"),
-           !baseClass.hasPrefix("bg-gradient-"),
-           !baseClass.hasPrefix("bg-clip-"),
-           !baseClass.hasPrefix("bg-origin-"),
-           !baseClass.hasPrefix("bg-no-repeat"),
-           !baseClass.hasPrefix("bg-repeat"),
-           !baseClass.hasPrefix("bg-cover"),
-           !baseClass.hasPrefix("bg-contain"),
-           !baseClass.hasPrefix("bg-center"),
-           !baseClass.hasPrefix("bg-fixed"),
-           !baseClass.hasPrefix("bg-local"),
-           !baseClass.hasPrefix("bg-scroll"),
-           !baseClass.hasPrefix("bg-none") {
-            return "background-color"
-        }
-        if baseClass.hasPrefix("rounded") { return "rounded" }
-        if baseClass.hasPrefix("p-") { return "padding-all" }
-        if baseClass.hasPrefix("px-") { return "padding-x" }
-        if baseClass.hasPrefix("py-") { return "padding-y" }
-        if baseClass.hasPrefix("pt-") { return "padding-top" }
-        if baseClass.hasPrefix("pr-") || baseClass.hasPrefix("pe-") { return "padding-trailing" }
-        if baseClass.hasPrefix("pb-") { return "padding-bottom" }
-        if baseClass.hasPrefix("pl-") || baseClass.hasPrefix("ps-") { return "padding-leading" }
-        if let borderGroup = borderConflictGroup(for: baseClass) {
-            return borderGroup
-        }
-        if let ringGroup = ringConflictGroup(for: baseClass) {
-            return ringGroup
-        }
-        if let outlineGroup = outlineConflictGroup(for: baseClass) {
-            return outlineGroup
-        }
-        if baseClass.hasPrefix("shadow") || baseClass.hasPrefix("drop-shadow") {
-            return "shadow"
-        }
-        if baseClass.hasPrefix("opacity-") { return "opacity" }
-        return nil
-    }
-
-    private static func borderConflictGroup(for baseClass: String) -> String? {
-        guard baseClass == "border" || baseClass.hasPrefix("border-") else { return nil }
-        if baseClass.hasPrefix("border-opacity-") { return "border-opacity" }
-
-        let styles: Set<String> = ["solid", "dashed", "dotted", "double", "none"]
-        let directional: Set<String> = ["x", "y", "t", "r", "b", "l", "s", "e"]
-
-        if baseClass == "border" { return "border-width-all" }
-
-        let suffix = String(baseClass.dropFirst("border-".count))
-        let parts = suffix.split(separator: "-", omittingEmptySubsequences: true).map(String.init)
-        guard !parts.isEmpty else { return "border-width-all" }
-
-        if styles.contains(parts[0]) {
-            return "border-style-all"
-        }
-
-        if directional.contains(parts[0]) {
-            if parts.count == 1 { return "border-width-\(parts[0])" }
-            let rest = parts.dropFirst().joined(separator: "-")
-            if styles.contains(rest) { return "border-style-\(parts[0])" }
-            if isWidthLikeToken(rest) { return "border-width-\(parts[0])" }
-            return "border-color-\(parts[0])"
-        }
-
-        if isWidthLikeToken(suffix) {
-            return "border-width-all"
-        }
-        return "border-color-all"
-    }
-
-    private static func ringConflictGroup(for baseClass: String) -> String? {
-        if baseClass == "ring" { return "ring-width" }
-        guard baseClass.hasPrefix("ring-") else { return nil }
-        if baseClass.hasPrefix("ring-offset-") {
-            let suffix = String(baseClass.dropFirst("ring-offset-".count))
-            return isWidthLikeToken(suffix) ? "ring-offset-width" : "ring-offset-color"
-        }
-        if baseClass == "ring-inset" || baseClass.hasPrefix("ring-inset") { return "ring-inset" }
-
-        let suffix = String(baseClass.dropFirst("ring-".count))
-        return isWidthLikeToken(suffix) ? "ring-width" : "ring-color"
-    }
-
-    private static func outlineConflictGroup(for baseClass: String) -> String? {
-        if baseClass == "outline" { return "outline-width" }
-        if baseClass == "outline-none" { return "outline-style" }
-        if baseClass.hasPrefix("outline-offset-") { return "outline-offset" }
-        guard baseClass.hasPrefix("outline-") else { return nil }
-
-        let suffix = String(baseClass.dropFirst("outline-".count))
-        if suffix == "solid" || suffix == "dashed" || suffix == "dotted" || suffix == "double" {
-            return "outline-style"
-        }
-        return isWidthLikeToken(suffix) ? "outline-width" : "outline-color"
-    }
-
-    private static func isWidthLikeToken(_ value: String) -> Bool {
-        if value == "px" { return true }
-        if value.hasPrefix("[") && value.hasSuffix("]") { return true }
-        return Double(value) != nil
-    }
-
-    private static func splitOnTopLevelColonsStatic(_ value: String) -> [String] {
-        var out: [String] = []
-        var current = ""
-        var bracketDepth = 0
-        var parenDepth = 0
-
-        for char in value {
-            if char == "[" { bracketDepth += 1 }
-            if char == "]" { bracketDepth = max(0, bracketDepth - 1) }
-            if char == "(" { parenDepth += 1 }
-            if char == ")" { parenDepth = max(0, parenDepth - 1) }
-
-            if char == ":" && bracketDepth == 0 && parenDepth == 0 {
-                out.append(current)
-                current = ""
-            } else {
-                current.append(char)
-            }
-        }
-
-        out.append(current)
-        return out
+        let parsed = TailwindClassParsing.parseVariantClass(className)
+        return (parsed.baseClass, parsed.variants.count)
     }
 
     private var viewType: TWViewType {
@@ -408,8 +256,12 @@ public struct TailwindModifier<Content: View>: View {
                 isDark: colorScheme == .dark,
                 isFocused: isFocused,
                 isHovered: isHovered,
-                isActive: isPressed
+                isActive: isPressed,
+                isEnabled: isEnabled
             )
+            // Fallback registry so peer-* can still work without explicit
+            // twPeerScope() on a shared ancestor.
+            TWGlobalPeerRegistry.set(state, for: peerId)
             view = AnyView(
                 view.background(
                     Color.clear.preference(
@@ -632,41 +484,8 @@ public struct TailwindModifier<Content: View>: View {
     }
     #endif
 
-    private struct ParsedVariantClass {
-        let variants: [String]
-        let baseClass: String
-    }
-
-    private func parseVariants(from className: String) -> ParsedVariantClass {
-        let parts = splitOnTopLevelColons(className)
-        guard parts.count > 1, let base = parts.last else {
-            return ParsedVariantClass(variants: [], baseClass: className)
-        }
-        return ParsedVariantClass(variants: Array(parts.dropLast()), baseClass: base)
-    }
-
-    private func splitOnTopLevelColons(_ value: String) -> [String] {
-        var out: [String] = []
-        var current = ""
-        var bracketDepth = 0
-        var parenDepth = 0
-
-        for char in value {
-            if char == "[" { bracketDepth += 1 }
-            if char == "]" { bracketDepth = max(0, bracketDepth - 1) }
-            if char == "(" { parenDepth += 1 }
-            if char == ")" { parenDepth = max(0, parenDepth - 1) }
-
-            if char == ":" && bracketDepth == 0 && parenDepth == 0 {
-                out.append(current)
-                current = ""
-            } else {
-                current.append(char)
-            }
-        }
-
-        out.append(current)
-        return out
+    private func parseVariants(from className: String) -> TailwindParsedClass {
+        TailwindClassParsing.parseVariantClass(className)
     }
 
     private func shouldApply(variants: [String]) -> Bool {
@@ -682,6 +501,8 @@ public struct TailwindModifier<Content: View>: View {
                 if !isHovered { return false }
             case "active":
                 if !isPressed { return false }
+            case "disabled":
+                if isEnabled { return false }
             case "group-dark":
                 if !twGroupDark { return false }
             case "group-focus":
@@ -724,11 +545,17 @@ public struct TailwindModifier<Content: View>: View {
                 #endif
             default:
                 if variant.hasPrefix("peer-") {
+                    if !TailwindVariantValidation.isSupportedPeerVariant(variant) {
+                        #if DEBUG
+                        TailwindLogger.warn(TailwindValidationMessages.unsupportedVariant(variant))
+                        #endif
+                        return false
+                    }
                     if !applyPeerVariant(variant) { return false }
                     continue
                 }
                 #if DEBUG
-                TailwindLogger.warn("Unsupported Tailwind variant: '\(variant):'")
+                TailwindLogger.warn(TailwindValidationMessages.unsupportedVariant(variant))
                 #endif
                 return false
             }
@@ -742,21 +569,24 @@ public struct TailwindModifier<Content: View>: View {
         // - peer-focus
         // - peer-hover
         // - peer-active
+        // - peer-disabled
         // - peer-dark/id
         // - peer-focus/id
         // - peer-hover/id
         // - peer-active/id
+        // - peer-disabled/id
         let body = String(variant.dropFirst("peer-".count))
         let parts = body.split(separator: "/", maxSplits: 1).map(String.init)
         guard let stateToken = parts.first else { return false }
         let peerId = parts.count > 1 ? parts[1] : "default"
-        guard let peer = twPeerStates[peerId] else { return false }
+        guard let peer = twPeerStates[peerId] ?? TWGlobalPeerRegistry.get(peerId) else { return false }
 
         switch stateToken {
         case "dark": return peer.isDark
         case "focus": return peer.isFocused
         case "hover": return peer.isHovered
         case "active": return peer.isActive
+        case "disabled": return !peer.isEnabled
         default: return false
         }
     }
@@ -779,9 +609,44 @@ public struct TailwindModifier<Content: View>: View {
 
     private func activeViewportWidth() -> CGFloat {
         #if canImport(UIKit)
-        return UIScreen.main.bounds.width
+        // Use active window-scene window size so responsive breakpoints
+        // track real app viewport (rotation, split view, stage manager).
+        if let keyWindowWidth = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .filter({ $0.activationState == .foregroundActive })
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)?
+            .bounds.width {
+            return keyWindowWidth
+        }
+
+        // Fallback: first foreground scene window width.
+        if let sceneWindowWidth = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .filter({ $0.activationState == .foregroundActive })
+            .flatMap(\.windows)
+            .first?
+            .bounds.width {
+            return sceneWindowWidth
+        }
+
+        return 0
         #elseif canImport(AppKit)
-        return NSScreen.main?.frame.width ?? 0
+        if let keyWindowWidth = NSApplication.shared.windows
+            .first(where: \.isKeyWindow)?
+            .contentView?
+            .bounds.width {
+            return keyWindowWidth
+        }
+
+        if let firstWindowWidth = NSApplication.shared.windows
+            .first?
+            .contentView?
+            .bounds.width {
+            return firstWindowWidth
+        }
+
+        return 0
         #else
         return 0
         #endif
@@ -875,13 +740,13 @@ public struct TailwindModifier<Content: View>: View {
         // Avoid duplicate logs for classes that are known but intentionally scoped
         // away from this host view type (for example layout classes on VStack/HStack).
         #if DEBUG
-        if TailwindValidation.classIntent(className) == .layoutContainer, viewType != .twView {
+        if TailwindClassCatalog.isLayoutClass(className), viewType != .twView {
             return view
         }
         #endif
 
         #if DEBUG
-        TailwindLogger.warn("Unknown Tailwind class: '\(className)'")
+        TailwindLogger.warn(TailwindValidationMessages.unknownClass(className))
         #endif
         return view
     }
@@ -896,7 +761,7 @@ public extension TailwindModifier {
             classes.split(separator: " ").map(String.init)
         )
         if TailwindModifier<Content>.hasCrossScopeConflicts(previous: rawClasses, incoming: additional) {
-            TailwindLogger.warn("Conflicting Tailwind classes detected across chained .tw() scopes. Merge into one .tw { ... } block or remove conflicting classes.")
+            TailwindLogger.warn(TailwindValidationMessages.conflictingStylesAcrossChainedScopes)
         }
         let merged = (rawClasses + additional).joined(separator: " ")
         return TailwindModifier(classes: merged, content: content)

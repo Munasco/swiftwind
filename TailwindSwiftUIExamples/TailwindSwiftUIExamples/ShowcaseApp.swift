@@ -74,6 +74,24 @@ struct ShowcaseApp: View {
                     Label("Shape", systemImage: "square.on.circle")
                 }
                 .tag(9)
+
+            BentoGradientExample()
+                .tabItem {
+                    Label("Bento", systemImage: "square.grid.3x2")
+                }
+                .tag(10)
+
+            GradientsExample()
+                .tabItem {
+                    Label("Gradients", systemImage: "sun.max.trianglebadge.exclamationmark")
+                }
+                .tag(11)
+
+            MacroExamples()
+                .tabItem {
+                    Label("Macros", systemImage: "curlybraces")
+                }
+                .tag(12)
         }
     }
 }

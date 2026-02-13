@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "EF037E0F-E257-4090-8ECA-A99519530A85",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "TailwindSwiftUITests",
+        "name" : "TailwindSwiftUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

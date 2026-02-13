@@ -1,10 +1,92 @@
 import SwiftUI
+import Foundation
+#if canImport(Synchronization)
+import Synchronization
+#endif
 
 struct TWPeerState: Equatable {
     var isDark: Bool
     var isFocused: Bool
     var isHovered: Bool
     var isActive: Bool
+    var isEnabled: Bool
+}
+
+enum TWGlobalPeerRegistry {
+    private protocol StorageProtocol: Sendable {
+        func set(_ state: TWPeerState, for id: String)
+        func get(_ id: String) -> TWPeerState?
+        func reset()
+    }
+
+    private final class LegacyStorage: StorageProtocol, @unchecked Sendable {
+        private let lock = NSLock()
+        private var states: [String: TWPeerState] = [:]
+
+        func set(_ state: TWPeerState, for id: String) {
+            lock.lock()
+            states[id] = state
+            lock.unlock()
+        }
+
+        func get(_ id: String) -> TWPeerState? {
+            lock.lock()
+            defer { lock.unlock() }
+            return states[id]
+        }
+
+        func reset() {
+            lock.lock()
+            states.removeAll()
+            lock.unlock()
+        }
+    }
+
+    #if canImport(Synchronization)
+    @available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, visionOS 2.0, *)
+    private final class ModernStorage: StorageProtocol {
+        private let mutex = Mutex([String: TWPeerState]())
+
+        func set(_ state: TWPeerState, for id: String) {
+            mutex.withLock { locked in
+                locked[id] = state
+            }
+        }
+
+        func get(_ id: String) -> TWPeerState? {
+            mutex.withLock { locked in
+                locked[id]
+            }
+        }
+
+        func reset() {
+            mutex.withLock { locked in
+                locked.removeAll()
+            }
+        }
+    }
+    #endif
+
+    private static let storage: any StorageProtocol = {
+        #if canImport(Synchronization)
+        if #available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, visionOS 2.0, *) {
+            return ModernStorage()
+        }
+        #endif
+        return LegacyStorage()
+    }()
+
+    static func set(_ state: TWPeerState, for id: String) {
+        storage.set(state, for: id)
+    }
+
+    static func get(_ id: String) -> TWPeerState? {
+        storage.get(id)
+    }
+
+    static func reset() {
+        storage.reset()
+    }
 }
 
 private struct TWGroupDarkKey: EnvironmentKey {

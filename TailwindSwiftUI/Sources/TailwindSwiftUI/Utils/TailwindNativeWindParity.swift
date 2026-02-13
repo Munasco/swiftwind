@@ -32,10 +32,16 @@ enum TailwindNativeWindParity {
         switch className {
         case "table", "table-caption", "table-cell", "table-column",
              "table-column-group", "table-footer-group", "table-header-group",
-             "table-row-group", "table-row":
+             "table-row-group", "table-row",
+             "table-auto", "table-fixed",
+             "border-collapse", "border-separate",
+             "caption-top", "caption-bottom":
             return true
         default:
             break
+        }
+        if className.hasPrefix("border-spacing-") {
+            return true
         }
 
         // Overscroll behavior is web-only.

@@ -41,6 +41,28 @@ struct ContentView: View {
 }
 ```
 
+## SwiftUI Layout Model (Important)
+
+Tailwind classes generally work as expected, but SwiftUI layout is not CSS layout.
+
+- In SwiftUI, parent and child sizing/alignment are negotiated together.
+- On built-in containers (`VStack`, `HStack`, `ZStack`, grids), layout changes can influence the container and surrounding layout, not just a single leaf.
+- This differs from the common "plain div" mental model on the web.
+
+If you want a more neutral wrapper surface for layout-heavy composition, prefer `TWViewLayout` and wrapper components like `TWButton`.
+
+```swift
+TWViewLayout {
+    Text("Primary")
+        .tw("px-4 py-2 rounded-md")
+}
+.tw("flex-row items-center justify-between gap-4 p-4")
+
+TWButton("Continue", classes: "px-4 py-2 bg-blue-600 text-white rounded-md") {
+    // action
+}
+```
+
 ## Complete Utility Reference
 
 ### Layout & Sizing
@@ -50,9 +72,11 @@ struct ContentView: View {
 .tw("p-4")          // padding all sides (16pt)
 .tw("px-4 py-2")    // horizontal & vertical
 .tw("pt-2 pr-4 pb-2 pl-4")  // individual sides
-.tw("m-4 mx-auto")  // margin with auto centering
-.tw("-mt-4")        // negative margin
 ```
+
+> Margin utilities are intentionally unsupported in SwiftUI.
+> SwiftUI layout is proposal-based, and CSS-style outer margin semantics do not map cleanly or predictably to native container layout.
+> Prefer container spacing/alignment (`spacing`, `frame`, `alignment`, `TWViewLayout`) instead.
 
 **Width & Height**
 ```swift

@@ -9,7 +9,7 @@ struct TailwindLintPlugin: BuildToolPlugin {
         let swiftFiles = sourceTarget.sourceFiles.filter { $0.type == .source && $0.url.pathExtension == "swift" }
         guard !swiftFiles.isEmpty else { return [] }
 
-        let tool = try context.tool(named: "TailwindLinter")
+        let tool = try context.tool(named: "TailwindLinterCLI")
         let inputFiles = swiftFiles.map(\.url)
 
         return [

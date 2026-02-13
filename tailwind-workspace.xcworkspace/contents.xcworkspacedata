@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:TailwindSwiftUI/Tests/TailwindSwiftUITests/TailwindSwiftUIPerformanceTests.xctestplan">
+   </FileRef>
+   <FileRef
       location = "group:TailwindSwiftUIExamples/TailwindSwiftUIExamples.xcodeproj">
    </FileRef>
    <FileRef
@@ -9,5 +12,14 @@
    </FileRef>
    <FileRef
       location = "group:SwiftCN">
+   </FileRef>
+   <FileRef
+      location = "group:TailwindSwiftUI/Tests/TailwindSwiftUITests/TailwindSwiftUITests.xctestplan">
+   </FileRef>
+   <FileRef
+      location = "group:TailwindSwiftUI/Tests/TailwindMacroTests/TailwindMacroTests.xctestplan">
+   </FileRef>
+   <FileRef
+      location = "group:TailwindSwiftUI/Tests/TailwindSwiftUITests/TailwindSwiftUIPerformanceTests.xctestplan">
    </FileRef>
 </Workspace>

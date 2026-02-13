@@ -2,16 +2,61 @@ import SwiftUI
 import TailwindSwiftUI
 
 struct ColorPaletteExample: View {
+    @State private var emphasize = false
+
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
                 Text("TailwindSwiftUI Color Palette")
-                    .tw("text-3xl font-bold text-zinc-50")
+                    .font(.system(size: 30, weight: .bold))
+                    .foregroundStyle(.white)
                     .padding(.top, 20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 16) {
+                    Toggle("Emphasize sample chip", isOn: $emphasize)
+                        .font(.headline)
+                        .foregroundStyle(Color.white.opacity(0.9))
+                        .tint(.pink500)
+
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            emphasize.toggle()
+                        }
+                    } label: {
+                        Text(emphasize ? "Emphasized Chip" : "Builder Pattern + State")
+                            .font(.system(.headline, design: .rounded))
+                            .foregroundStyle(emphasize ? Color.white : Color.slate100)
+                            .padding(.horizontal, emphasize ? 24 : 18)
+                            .padding(.vertical, emphasize ? 14 : 10)
+                            .background(
+                                LinearGradient(
+                                    colors: emphasize ? [.amber600, .amber800] : [.slate700, .slate800],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: emphasize ? 18 : 14)
+                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                            .cornerRadius(emphasize ? 18 : 14)
+                            .shadow(color: Color.black.opacity(emphasize ? 0.35 : 0.2),
+                                    radius: emphasize ? 12 : 6,
+                                    y: emphasize ? 8 : 4)
+                    }
+                }
+                .padding(16)
+                .background(.ultraThinMaterial.opacity(0.7))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
+                .cornerRadius(18)
                 
                 // Slate
                 ColorRow(name: "Slate", colors: [
-                    ("50", Color.slate50),
+                    ("50", .slate50),
                     ("100", Color.slate100),
                     ("200", Color.slate200),
                     ("300", Color.slate300),
@@ -86,6 +131,14 @@ struct ColorPaletteExample: View {
             }
             .padding()
         }
+        .background(
+            LinearGradient(
+                colors: [.slate950, .slate900, .slate800],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .ignoresSafeArea(edges: .bottom)
     }
 }
 
@@ -96,7 +149,8 @@ struct ColorRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(name)
-                .tw("text-lg font-semibold text-slate-700")
+                .font(.headline)
+                .foregroundStyle(Color.slate800)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -111,7 +165,9 @@ struct ColorRow: View {
                                 )
                             
                             Text(shade)
-                                .tw("text-xs text-slate-600")
+                                .font(.caption2)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Color.slate600)
                         }
                     }
                 }
@@ -123,3 +179,118 @@ struct ColorRow: View {
 #Preview {
     ColorPaletteExample()
 }
+// MARK: - Tailwind-powered variant
+
+struct ColorPaletteExampleTW: View {
+    @State private var emphasize = false
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 32) {
+                Text("TailwindSwiftUI Color Palette")
+                    .tw("text-3xl font-bold text-white")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 20)
+
+                VStack(alignment: .leading, spacing: 16) {
+                    Toggle("Emphasize sample chip", isOn: $emphasize)
+                        .tw(
+                            #styles("text-red-100 text-red-700")
+                        )
+                        .tint(.pink500)
+
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            emphasize.toggle()
+                        }
+                    } label: {
+                        Text(emphasize ? "Emphasized Chip" : "Builder Pattern + State")
+                            .tw {
+                                #styles {
+                                    "px-8"
+                                    "bg-blue-500"
+                                }
+                            }
+                            
+                   
+                    }
+                    
+                }
+                .tw("p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur")
+
+                ColorRowTW(name: "Slate", colors: palette(.slate))
+                ColorRowTW(name: "Red", colors: palette(.red))
+                ColorRowTW(name: "Blue", colors: palette(.blue))
+                ColorRowTW(name: "Green", colors: palette(.green))
+                ColorRowTW(name: "Purple", colors: palette(.purple))
+            }
+            .padding()
+        }
+        .background(
+            LinearGradient(
+                colors: [.slate950, .slate900, .slate800],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .ignoresSafeArea(edges: .bottom)
+    }
+
+    private enum PaletteKind { case slate, red, blue, green, purple }
+
+    private func palette(_ kind: PaletteKind) -> [(String, Color)] {
+        switch kind {
+        case .slate:
+            return [("50", .slate50), ("100", .slate100), ("200", .slate200), ("300", .slate300), ("400", .slate400),
+                    ("500", .slate500), ("600", .slate600), ("700", .slate700), ("800", .slate800), ("900", .slate900), ("950", .slate950)]
+        case .red:
+            return [("50", .red50), ("100", .red100), ("200", .red200), ("300", .red300), ("400", .red400),
+                    ("500", .red500), ("600", .red600), ("700", .red700), ("800", .red800), ("900", .red900), ("950", .red950)]
+        case .blue:
+            return [("50", .blue50), ("100", .blue100), ("200", .blue200), ("300", .blue300), ("400", .blue400),
+                    ("500", .blue500), ("600", .blue600), ("700", .blue700), ("800", .blue800), ("900", .blue900), ("950", .blue950)]
+        case .green:
+            return [("50", .green50), ("100", .green100), ("200", .green200), ("300", .green300), ("400", .green400),
+                    ("500", .green500), ("600", .green600), ("700", .green700), ("800", .green800), ("900", .green900), ("950", .green950)]
+        case .purple:
+            return [("50", .purple50), ("100", .purple100), ("200", .purple200), ("300", .purple300), ("400", .purple400),
+                    ("500", .purple500), ("600", .purple600), ("700", .purple700), ("800", .purple800), ("900", .purple900), ("950", .purple950)]
+        }
+    }
+}
+
+struct ColorRowTW: View {
+    let name: String
+    let colors: [(String, Color)]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(name)
+                .tw("text-lg font-semibold text-slate-100")
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(colors, id: \.0, content: swatch)
+                }
+            }
+        }
+        .tw("p-1")
+    }
+
+    @ViewBuilder
+    private func swatch(shade: String, color: Color) -> some View {
+        VStack(spacing: 4) {
+            let shape = RoundedRectangle(cornerRadius: 10)
+            
+            shape
+                .tw("fill-[\(String(describing: color.hex))] size-16 stroke-white/20 stroke-1")
+
+            Text(shade)
+                .tw("text-[11px] font-semibold text-slate-200")
+        }
+    }
+}
+#Preview {
+    ColorPaletteExampleTW()
+}
+

@@ -1,4 +1,5 @@
 import SwiftUI
+import TailwindLinter
 
 // MARK: - Class categories for validation
 enum TWClassIntent {
@@ -45,21 +46,7 @@ enum TailwindValidation {
     /// Returns the intent of a Tailwind class
     static func classIntent(_ className: String) -> TWClassIntent {
         // Layout container classes - make no sense on Text/Image
-        if className.hasPrefix("flex-") || className == "flex" ||
-           className.hasPrefix("justify-") || className.hasPrefix("items-") ||
-           className.hasPrefix("content-") || className.hasPrefix("place-") ||
-           className.hasPrefix("grid-") || className.hasPrefix("auto-cols-") ||
-           className.hasPrefix("auto-rows-") || className.hasPrefix("col-span-") ||
-           className.hasPrefix("col-start-") || className.hasPrefix("col-end-") ||
-           className.hasPrefix("row-span-") || className.hasPrefix("row-start-") ||
-           className.hasPrefix("row-end-") || className.hasPrefix("gap-") ||
-           className.hasPrefix("columns-") || className.hasPrefix("grid-flow-") ||
-           className.hasPrefix("space-x-") || className.hasPrefix("space-y-") ||
-           className.hasPrefix("divide-") || className.hasPrefix("self-") ||
-           className == "grow" || className == "grow-0" ||
-           className == "shrink" || className == "shrink-0" ||
-           className.hasPrefix("order-") || className.hasPrefix("float-") ||
-           className.hasPrefix("clear-") {
+        if TailwindClassCatalog.isLayoutClass(className) {
             return .layoutContainer
         }
 

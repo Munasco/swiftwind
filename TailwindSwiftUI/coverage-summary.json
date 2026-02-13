@@ -1,0 +1,43 @@
+{
+  "overall": {
+    "lines": {
+      "count": 8092,
+      "covered": 1673,
+      "percent": 20.674740484429066
+    },
+    "functions": {
+      "count": 1439,
+      "covered": 282,
+      "percent": 19.596942321056289
+    },
+    "regions": {
+      "count": 4682,
+      "covered": 665,
+      "notcovered": 4017,
+      "percent": 14.203331909440411
+    }
+  },
+  "sources_only": {
+    "lines": {
+      "count": 7547,
+      "covered": 1131,
+      "percent": 14.986087186961706
+    },
+    "functions": {
+      "count": 1363,
+      "covered": 206,
+      "percent": 15.113719735876742
+    },
+    "regions": {
+      "count": 4595,
+      "covered": 579,
+      "notcovered": 4016,
+      "percent": 12.600652883569097
+    }
+  },
+  "artifacts": {
+    "swiftpm_codecov_json": ".build/arm64-apple-macosx/debug/codecov/TailwindSwiftUI.json",
+    "llvm_profdata": ".build/arm64-apple-macosx/debug/codecov/default.profdata",
+    "html_report_dir": "coverage-html/index.html"
+  }
+}

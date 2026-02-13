@@ -2,6 +2,24 @@ import SwiftUI
 
 // MARK: - Layout: flex, grid, position, overflow, display, visibility, z-index, gap, object-fit
 extension TailwindModifier {
+    private var isPositionedForInset: Bool {
+        switch twPositionMode {
+        case .static:
+            return false
+        case .relative, .absolute, .fixed, .sticky:
+            return true
+        }
+    }
+
+    private func applyInset(_ view: AnyView, className: String, x: CGFloat = 0, y: CGFloat = 0) -> AnyView {
+        guard isPositionedForInset else {
+            #if DEBUG
+            TailwindLogger.warn("'\(className)' requires a positioned element ('relative', 'absolute', 'fixed', or 'sticky').")
+            #endif
+            return view
+        }
+        return AnyView(view.offset(x: x, y: y))
+    }
 
     func applyLayoutClass(_ className: String, to view: AnyView) -> AnyView? {
         // Most layout-affecting utilities are intentionally scoped to TWView only.
@@ -21,10 +39,6 @@ extension TailwindModifier {
              "grid", "inline-grid", "contents", "flow-root":
             return AnyView(view)
         case "hidden": return AnyView(view.hidden())
-        case "table", "table-caption", "table-cell", "table-column",
-             "table-column-group", "table-footer-group", "table-header-group",
-             "table-row-group", "table-row":
-            return AnyView(view)
         default: break
         }
 
@@ -38,8 +52,28 @@ extension TailwindModifier {
 
         // Position
         switch className {
-        case "static", "relative", "absolute", "fixed", "sticky":
-            return AnyView(view)
+        case "static":
+            return AnyView(view.environment(\.twPositionMode, .static))
+        case "relative":
+            return AnyView(view.environment(\.twPositionMode, .relative))
+        case "absolute":
+            return AnyView(
+                view
+                    .environment(\.twPositionMode, .absolute)
+                    .zIndex(1)
+            )
+        case "fixed":
+            return AnyView(
+                view
+                    .environment(\.twPositionMode, .fixed)
+                    .zIndex(2)
+            )
+        case "sticky":
+            return AnyView(
+                view
+                    .environment(\.twPositionMode, .sticky)
+                    .zIndex(1)
+            )
         default: break
         }
 
@@ -48,7 +82,7 @@ extension TailwindModifier {
             let val = className.replacingOccurrences(of: "inset-x-", with: "")
             if val == "0" || val == "auto" || val == "full" { return AnyView(view) }
             if let v = extractNumber(from: className, prefix: "inset-x-") {
-                return AnyView(view.offset(x: spacingValue(v)))
+                return applyInset(view, className: className, x: spacingValue(v))
             }
             return AnyView(view)
         }
@@ -56,7 +90,7 @@ extension TailwindModifier {
             let val = className.replacingOccurrences(of: "inset-y-", with: "")
             if val == "0" || val == "auto" || val == "full" { return AnyView(view) }
             if let v = extractNumber(from: className, prefix: "inset-y-") {
-                return AnyView(view.offset(y: spacingValue(v)))
+                return applyInset(view, className: className, y: spacingValue(v))
             }
             return AnyView(view)
         }
@@ -67,43 +101,43 @@ extension TailwindModifier {
             if val == "full" { return AnyView(view) }
             if val == "x-0" || val == "y-0" || val == "x-auto" || val == "y-auto" { return AnyView(view) }
             if let v = extractNumber(from: className, prefix: "inset-") {
-                return AnyView(view.offset(x: spacingValue(v), y: spacingValue(v)))
+                return applyInset(view, className: className, x: spacingValue(v), y: spacingValue(v))
             }
             return AnyView(view)
         }
         if className.hasPrefix("top-") {
             if let v = extractNumber(from: className, prefix: "top-") {
-                return AnyView(view.offset(y: spacingValue(v)))
+                return applyInset(view, className: className, y: spacingValue(v))
             }
             return AnyView(view)
         }
         if className.hasPrefix("bottom-") {
             if let v = extractNumber(from: className, prefix: "bottom-") {
-                return AnyView(view.offset(y: -spacingValue(v)))
+                return applyInset(view, className: className, y: -spacingValue(v))
             }
             return AnyView(view)
         }
         if className.hasPrefix("left-") {
             if let v = extractNumber(from: className, prefix: "left-") {
-                return AnyView(view.offset(x: spacingValue(v)))
+                return applyInset(view, className: className, x: spacingValue(v))
             }
             return AnyView(view)
         }
         if className.hasPrefix("right-") && !className.hasPrefix("right-[") {
             if let v = extractNumber(from: className, prefix: "right-") {
-                return AnyView(view.offset(x: -spacingValue(v)))
+                return applyInset(view, className: className, x: -spacingValue(v))
             }
             return AnyView(view)
         }
         if className.hasPrefix("start-") {
             if let v = extractNumber(from: className, prefix: "start-") {
-                return AnyView(view.offset(x: spacingValue(v)))
+                return applyInset(view, className: className, x: spacingValue(v))
             }
             return AnyView(view)
         }
         if className.hasPrefix("end-") {
             if let v = extractNumber(from: className, prefix: "end-") {
-                return AnyView(view.offset(x: -spacingValue(v)))
+                return applyInset(view, className: className, x: -spacingValue(v))
             }
             return AnyView(view)
         }
@@ -249,10 +283,6 @@ extension TailwindModifier {
         if className.hasPrefix("grid-flow-") {
             return AnyView(view)
         }
-        if className.hasPrefix("border-spacing-") {
-            return AnyView(view)
-        }
-
         // Overflow
         switch className {
         case "overflow-auto":

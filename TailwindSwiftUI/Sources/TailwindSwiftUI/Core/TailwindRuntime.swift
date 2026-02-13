@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import TailwindLinter
 
 public enum TailwindThemeTokenKind: String, CaseIterable, Sendable {
     case animate
@@ -313,6 +314,11 @@ public struct TailwindColorValue: Sendable {
     public static func color(light: String, dark: String? = nil) -> TailwindColorValue {
         TailwindColorValue(light: light, dark: dark)
     }
+
+    /// Single-value convenience. Applies to both light and dark.
+    public static func color(_ value: String) -> TailwindColorValue {
+        TailwindColorValue(light: value, dark: nil)
+    }
 }
 
 public struct TailwindThemeTokenValue: Sendable {
@@ -331,6 +337,16 @@ public struct TailwindThemeTokenValue: Sendable {
     public static func color(light: String, dark: String? = nil) -> TailwindThemeTokenValue {
         TailwindThemeTokenValue(light: light, dark: dark)
     }
+
+    /// Single-value convenience. Applies to both light and dark.
+    public static func token(_ value: String) -> TailwindThemeTokenValue {
+        TailwindThemeTokenValue(light: value, dark: nil)
+    }
+
+    /// Single-value convenience. Applies to both light and dark.
+    public static func color(_ value: String) -> TailwindThemeTokenValue {
+        TailwindThemeTokenValue(light: value, dark: nil)
+    }
 }
 
 public struct TailwindCSSPropertyValue: Sendable {
@@ -344,6 +360,11 @@ public struct TailwindCSSPropertyValue: Sendable {
 
     public static func css(light: String, dark: String? = nil) -> TailwindCSSPropertyValue {
         TailwindCSSPropertyValue(light: light, dark: dark)
+    }
+
+    /// Single-value convenience. Applies to both light and dark.
+    public static func css(_ value: String) -> TailwindCSSPropertyValue {
+        TailwindCSSPropertyValue(light: value, dark: nil)
     }
 }
 
@@ -386,6 +407,20 @@ public extension TailwindVariableEntry {
     /// Example: `.color("--color-brand", light: "blue-500", dark: "yellow-500")`
     static func color(_ name: String, light: String, dark: String? = nil) -> TailwindVariableEntry {
         .themeToken(TailwindThemeTokenVar(name, kind: .color, light: light, dark: dark))
+    }
+
+    /// Single-value color entry. Applies to both light and dark.
+    static func color(_ name: String, _ value: String) -> TailwindVariableEntry {
+        .themeToken(TailwindThemeTokenVar(name, kind: .color, light: value, dark: nil))
+    }
+
+    /// Single-value theme token entry. Applies to both light and dark.
+    static func themeToken(
+        _ name: String,
+        kind: TailwindThemeTokenKind,
+        _ value: String
+    ) -> TailwindVariableEntry {
+        .themeToken(TailwindThemeTokenVar(name, kind: kind, light: value, dark: nil))
     }
 
     /// Platform-aware theme token entry.
@@ -537,6 +572,15 @@ public extension TailwindVariableEntry {
         .rawCss(TailwindRawCssVar(name, property: property, light: light, dark: dark))
     }
 
+    /// Single-value CSS variable entry. Applies to both light and dark.
+    static func css(
+        _ name: String,
+        property: String,
+        _ value: String
+    ) -> TailwindVariableEntry {
+        .rawCss(TailwindRawCssVar(name, property: property, light: value, dark: nil))
+    }
+
     static func css(
         _ name: String,
         property: String,
@@ -574,6 +618,15 @@ public extension TailwindVariableEntry {
         dark: String? = nil
     ) -> TailwindVariableEntry {
         .rawCss(TailwindRawCssVar(name, property: property, light: light, dark: dark))
+    }
+
+    /// Single-value CSS variable entry. Applies to both light and dark.
+    static func css(
+        _ name: String,
+        property: TailwindRawCssProperty,
+        _ value: String
+    ) -> TailwindVariableEntry {
+        .rawCss(TailwindRawCssVar(name, property: property, light: value, dark: nil))
     }
 
     static func css(
@@ -1004,6 +1057,7 @@ private final class Tailwind: @unchecked Sendable {
     static let shared = Tailwind()
 
     private let lock = NSLock()
+    private var didSeedDefaultTheme = false
     private var colors: [String: Color] = [:]
     private var darkColors: [String: Color] = [:]
     private var varDefinitions: [String: TailwindVar] = [:]
@@ -1039,8 +1093,10 @@ private final class Tailwind: @unchecked Sendable {
                 throw TailwindInitializationError.unresolvedReference(variable: variable, reference: reference)
             case let .circularReference(path):
                 throw TailwindInitializationError.circularReference(path: path)
-            case let .invalidColorVariableName(variable):
-                throw TailwindInitializationError.invalidColorVariableName(variable: variable)
+            case .invalidThemeTokenName, .invalidCssPropertyName:
+                // Non-fatal by design: we keep parity with Tailwind behavior by
+                // treating non-conforming names as plain CSS variables.
+                break
             }
         }
 
@@ -1054,9 +1110,20 @@ private final class Tailwind: @unchecked Sendable {
                 TailwindLogger.warn(
                     "Tailwind var cycle detected: \(path.joined(separator: " -> "))."
                 )
-            case let .invalidColorVariableName(variable):
+            case let .invalidThemeTokenName(variable, kind, expectedPrefixes):
                 TailwindLogger.warn(
-                    "Tailwind var '\(variable)' resolves to a color value but is not named '--color-*' (or '--tw-color-*')."
+                    TailwindValidationMessages.invalidThemeTokenVariableName(
+                        variable: variable,
+                        kind: kind,
+                        expectedPrefixes: expectedPrefixes
+                    )
+                )
+            case let .invalidCssPropertyName(variable, property):
+                TailwindLogger.warn(
+                    TailwindValidationMessages.invalidCSSPropertyName(
+                        variable: variable,
+                        property: property
+                    )
                 )
             }
         }
@@ -1067,6 +1134,7 @@ private final class Tailwind: @unchecked Sendable {
     func configureLazyDefaultVarDefinitions(_ defaults: [String: TailwindVar]) {
         lock.lock()
         defer { lock.unlock() }
+        didSeedDefaultTheme = true
 
         for (key, definition) in defaults {
             for normalized in normalizedNames(for: key) {
@@ -1105,6 +1173,7 @@ private final class Tailwind: @unchecked Sendable {
     func reset() {
         lock.lock()
         defer { lock.unlock() }
+        didSeedDefaultTheme = false
         colors.removeAll()
         darkColors.removeAll()
         varDefinitions.removeAll()
@@ -1115,6 +1184,7 @@ private final class Tailwind: @unchecked Sendable {
     func colorVariable(_ rawName: String, colorScheme: ColorScheme) -> Color? {
         lock.lock()
         defer { lock.unlock() }
+        ensureDefaultThemeSeededLocked()
 
         var visited = Set<String>()
         for key in normalizedNames(for: rawName) {
@@ -1138,6 +1208,7 @@ private final class Tailwind: @unchecked Sendable {
     func rawVariable(_ rawName: String, colorScheme: ColorScheme) -> String? {
         lock.lock()
         defer { lock.unlock() }
+        ensureDefaultThemeSeededLocked()
 
         var visited = Set<String>()
         for key in normalizedNames(for: rawName) {
@@ -1175,6 +1246,18 @@ private final class Tailwind: @unchecked Sendable {
         return resolved
     }
 
+    private func ensureDefaultThemeSeededLocked() {
+        guard !didSeedDefaultTheme else { return }
+        didSeedDefaultTheme = true
+        for (key, definition) in TailwindDefaultTheme.makeVariables() {
+            for normalized in normalizedNames(for: key) {
+                if varDefinitions[normalized] == nil {
+                    lazyDefaultVarDefinitions[normalized] = definition
+                }
+            }
+        }
+    }
+
     private func normalizedNames(for raw: String) -> [String] {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         let withoutVar = if trimmed.hasPrefix("var(") && trimmed.hasSuffix(")") {
@@ -1184,7 +1267,7 @@ private final class Tailwind: @unchecked Sendable {
         }
 
         guard withoutVar.hasPrefix("--") else {
-            TailwindLogger.warn("Tailwind var '\(withoutVar)' must start with '--'. Example: --brand-bg")
+            TailwindLogger.warn(TailwindValidationMessages.varMustStartWithDoubleDash(withoutVar, example: "--brand-bg"))
             return []
         }
 
@@ -1509,23 +1592,34 @@ private final class Tailwind: @unchecked Sendable {
     private enum ValidationIssue {
         case unresolvedReference(variable: String, reference: String)
         case circularReference(path: [String])
-        case invalidColorVariableName(variable: String)
+        case invalidThemeTokenName(variable: String, kind: String, expectedPrefixes: [String])
+        case invalidCssPropertyName(variable: String, property: String)
     }
 
     private func validationIssuesLocked() -> [ValidationIssue] {
         var issues: [ValidationIssue] = []
         var seenUnresolved = Set<String>()
-        var seenInvalidColorName = Set<String>()
+        var seenInvalidThemeName = Set<String>()
+        var seenInvalidCssProperty = Set<String>()
 
         for (name, definition) in varDefinitions {
-            if definitionContainsColorValue(definition),
-               !name.hasPrefix("color-"),
-               !name.hasPrefix("--color-"),
-               !name.hasPrefix("tw-color-"),
-               !name.hasPrefix("--tw-color-") {
-                if !seenInvalidColorName.contains(name) {
-                    issues.append(.invalidColorVariableName(variable: name))
-                    seenInvalidColorName.insert(name)
+            if let invalidThemeName = invalidThemeTokenNameIssue(variable: name, definition: definition) {
+                let key = "\(name)|\(invalidThemeName.kind)"
+                if !seenInvalidThemeName.contains(key) {
+                    issues.append(.invalidThemeTokenName(
+                        variable: name,
+                        kind: invalidThemeName.kind,
+                        expectedPrefixes: invalidThemeName.expectedPrefixes
+                    ))
+                    seenInvalidThemeName.insert(key)
+                }
+            }
+
+            if let invalidCssProperty = invalidCssPropertyNameIssue(variable: name, definition: definition) {
+                let key = "\(name)|\(invalidCssProperty)"
+                if !seenInvalidCssProperty.contains(key) {
+                    issues.append(.invalidCssPropertyName(variable: name, property: invalidCssProperty))
+                    seenInvalidCssProperty.insert(key)
                 }
             }
 
@@ -1555,6 +1649,77 @@ private final class Tailwind: @unchecked Sendable {
         return issues
     }
 
+    private func invalidThemeTokenNameIssue(
+        variable name: String,
+        definition: TailwindVar
+    ) -> (kind: String, expectedPrefixes: [String])? {
+        if let kind = explicitThemeTokenKind(in: definition),
+           let issue = TailwindVariableValidation.invalidThemeTokenName(
+               name,
+               forThemeKindRawValue: kind.rawValue
+           ) {
+            return (kind.rawValue, issue.expectedPrefixes)
+        }
+
+        if definitionContainsColorValue(definition),
+           let issue = TailwindVariableValidation.invalidThemeTokenName(
+               name,
+               forThemeKindRawValue: TailwindThemeTokenKind.color.rawValue
+           ) {
+            return (TailwindThemeTokenKind.color.rawValue, issue.expectedPrefixes)
+        }
+
+        return nil
+    }
+
+    private func explicitThemeTokenKind(in definition: TailwindVar) -> TailwindThemeTokenKind? {
+        switch definition.light {
+        case let .typedToken(type, _):
+            return type
+        default:
+            break
+        }
+
+        if let dark = definition.dark {
+            switch dark {
+            case let .typedToken(type, _):
+                return type
+            default:
+                break
+            }
+        }
+
+        return nil
+    }
+
+    private func invalidCssPropertyNameIssue(
+        variable name: String,
+        definition: TailwindVar
+    ) -> String? {
+        guard let propertyName = rawCssPropertyName(in: definition) else { return nil }
+        return TailwindVariableValidation.isValidCSSPropertyName(propertyName) ? nil : propertyName
+    }
+
+    private func rawCssPropertyName(in definition: TailwindVar) -> String? {
+        switch definition.light {
+        case let .rawCss(_, property):
+            return property.cssName
+        default:
+            break
+        }
+
+        if let dark = definition.dark {
+            switch dark {
+            case let .rawCss(_, property):
+                return property.cssName
+            default:
+                break
+            }
+        }
+
+        return nil
+    }
+
     private func definitionContainsColorValue(_ definition: TailwindVar) -> Bool {
         expressionCanResolveColor(definition.light) || definition.dark.map(expressionCanResolveColor) == true
     }
@@ -1571,7 +1736,8 @@ private final class Tailwind: @unchecked Sendable {
             let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
             if parseTailwindColorVariableName(trimmed) != nil { return true }
             if let token = parseVarFunction(trimmed) {
-                return parseTailwindColorVariableName(token) != nil || token.hasPrefix("--color-") || token.hasPrefix("--tw-color-")
+                return parseTailwindColorVariableName(token) != nil ||
+                    TailwindVariableValidation.isColorThemeVariableToken(token)
             }
             return TailwindColorResolver.parseRuntimeColorValue(trimmed) != nil
         case .reference:
@@ -1584,21 +1750,14 @@ private final class Tailwind: @unchecked Sendable {
         guard trimmed.hasPrefix("var("), trimmed.hasSuffix(")") else { return nil }
         let token = String(trimmed.dropFirst(4).dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
         guard token.hasPrefix("--") else {
-            TailwindLogger.warn("Tailwind var '\(token)' must start with '--'. Example: var(--brand-bg)")
+            TailwindLogger.warn(TailwindValidationMessages.varMustStartWithDoubleDash(token, example: "var(--brand-bg)"))
             return nil
         }
         return token
     }
 
     private func parseTailwindColorVariableName(_ raw: String) -> String? {
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.hasPrefix("--color-") {
-            return String(trimmed.dropFirst("--color-".count))
-        }
-        if trimmed.hasPrefix("--tw-color-") {
-            return String(trimmed.dropFirst("--tw-color-".count))
-        }
-        return nil
+        TailwindVariableValidation.themeColorName(from: raw)
     }
 }
 

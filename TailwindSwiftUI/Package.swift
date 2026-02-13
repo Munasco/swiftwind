@@ -15,6 +15,10 @@ let package = Package(
             name: "TailwindSwiftUI",
             targets: ["TailwindSwiftUI"]
         ),
+        .library(
+            name: "TailwindLinter",
+            targets: ["TailwindLinter"]
+        ),
         .plugin(
             name: "TailwindLintPlugin",
             targets: ["TailwindLintPlugin"]
@@ -25,30 +29,39 @@ let package = Package(
     ],
     targets: [
         .target(
+            name: "TailwindLinter"
+        ),
+        .target(
             name: "TailwindSwiftUI",
-            dependencies: ["TailwindMacros"]
+            dependencies: ["TailwindMacros", "TailwindLinter"]
         ),
         .macro(
             name: "TailwindMacros",
             dependencies: [
+                "TailwindLinter",
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
             ]
         ),
         .executableTarget(
-            name: "TailwindLinter",
-            path: "Sources/TailwindLinter"
+            name: "TailwindLinterCLI",
+            dependencies: ["TailwindLinter"],
+            path: "Sources/TailwindLinterCLI"
         ),
         .plugin(
             name: "TailwindLintPlugin",
             capability: .buildTool(),
             dependencies: [
-                .target(name: "TailwindLinter"),
+                .target(name: "TailwindLinterCLI"),
             ]
         ),
         .testTarget(
             name: "TailwindSwiftUITests",
             dependencies: ["TailwindSwiftUI"]
+        ),
+        .testTarget(
+            name: "TailwindLinterTests",
+            dependencies: ["TailwindLinter"]
         ),
         .testTarget(
             name: "TailwindMacroTests",

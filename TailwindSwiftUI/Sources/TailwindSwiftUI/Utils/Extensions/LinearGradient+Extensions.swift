@@ -6,7 +6,7 @@ import UIKit
 import AppKit
 #endif
 
-public enum TailwindGradientInterpolationMode {
+public enum GradientInterpolationMode {
     case srgb
     case oklch
 }
@@ -16,7 +16,7 @@ public extension LinearGradient {
         colors: [Color],
         startPoint: UnitPoint,
         endPoint: UnitPoint,
-        interpolation: TailwindGradientInterpolationMode
+        interpolation: GradientInterpolationMode
     ) {
         switch interpolation {
         case .srgb:
@@ -32,7 +32,7 @@ public extension LinearGradient {
 }
 
 private enum OKLCHGradientInterpolator {
-    struct TailwindOKLCHComponents {
+    struct OKLCHComponents {
         let l: Double
         let c: Double
         let h: Double
@@ -49,7 +49,7 @@ private enum OKLCHGradientInterpolator {
             return LinearGradient(colors: colors, startPoint: start, endPoint: end)
         }
 
-        let converted = colors.compactMap(tailwindOKLCHComponents(from:))
+        let converted = colors.compactMap(oklchComponents(from:))
         guard converted.count == colors.count else {
             return LinearGradient(colors: colors, startPoint: start, endPoint: end)
         }
@@ -83,12 +83,12 @@ private enum OKLCHGradientInterpolator {
         return LinearGradient(gradient: Gradient(stops: stops), startPoint: start, endPoint: end)
     }
 
-    private static func tailwindOKLCHComponents(from color: Color) -> TailwindOKLCHComponents? {
-        guard let rgba = tailwindRGBA(from: color) else { return nil }
+    private static func oklchComponents(from color: Color) -> OKLCHComponents? {
+        guard let rgba = rgba(from: color) else { return nil }
 
-        let red = tailwindSRGBToLinear(rgba.r)
-        let green = tailwindSRGBToLinear(rgba.g)
-        let blue = tailwindSRGBToLinear(rgba.b)
+        let red = srgbToLinear(rgba.r)
+        let green = srgbToLinear(rgba.g)
+        let blue = srgbToLinear(rgba.b)
 
         let l = 0.4122214708 * red + 0.5363325363 * green + 0.0514459929 * blue
         let m = 0.2119034982 * red + 0.6806995451 * green + 0.1073969566 * blue
@@ -111,10 +111,10 @@ private enum OKLCHGradientInterpolator {
     }
 
     private static func interpolate(
-        start: TailwindOKLCHComponents,
-        end: TailwindOKLCHComponents,
+        start: OKLCHComponents,
+        end: OKLCHComponents,
         t: Double
-    ) -> TailwindOKLCHComponents {
+    ) -> OKLCHComponents {
         let lightness = start.l + (end.l - start.l) * t
         let chroma = start.c + (end.c - start.c) * t
         let deltaHue = shortestHueDelta(from: start.h, to: end.h)
@@ -130,7 +130,7 @@ private enum OKLCHGradientInterpolator {
         return delta
     }
 
-    private static func tailwindRGBA(from color: Color) -> (r: Double, g: Double, b: Double, a: Double)? {
+    private static func rgba(from color: Color) -> (r: Double, g: Double, b: Double, a: Double)? {
         #if canImport(UIKit)
         let uiColor = UIColor(color)
         var r: CGFloat = 0
@@ -153,7 +153,7 @@ private enum OKLCHGradientInterpolator {
         #endif
     }
 
-    private static func tailwindSRGBToLinear(_ value: Double) -> Double {
+    private static func srgbToLinear(_ value: Double) -> Double {
         if value <= 0.04045 { return value / 12.92 }
         return pow((value + 0.055) / 1.055, 2.4)
     }

@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "E2A11342-11D0-48E0-AA1B-4CA9A8128B2A",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "TailwindMacroTests",
+        "name" : "TailwindMacroTests"
+      }
+    }
+  ],
+  "version" : 1
+}
