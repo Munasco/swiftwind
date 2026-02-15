@@ -12,6 +12,16 @@ public struct TailwindConflictDiagnostic: Sendable {
     }
 }
 
+public struct TailwindDuplicateDiagnostic: Sendable {
+    public let className: String
+    public let scope: String
+
+    public init(className: String, scope: String) {
+        self.className = className
+        self.scope = scope
+    }
+}
+
 public enum TailwindConflictValidation {
     public static func conflictKey(for className: String) -> String? {
         let parsed = TailwindClassParsing.parseVariantClass(className)
@@ -37,6 +47,29 @@ public enum TailwindConflictValidation {
             } else if seen[key] == nil {
                 seen[key] = parsed.baseClass
             }
+        }
+
+        return diagnostics
+    }
+
+    public static func detectDuplicates(in classNames: [String]) -> [TailwindDuplicateDiagnostic] {
+        var seen = Set<String>()
+        var reported = Set<String>()
+        var diagnostics: [TailwindDuplicateDiagnostic] = []
+
+        for className in classNames {
+            let parsed = TailwindClassParsing.parseVariantClass(className)
+            let variantScope = parsed.variants.joined(separator: ":")
+            let key = "\(variantScope)|\(parsed.baseClass)"
+
+            guard !seen.insert(key).inserted else { continue }
+            guard reported.insert(key).inserted else { continue }
+
+            let normalizedClass = variantScope.isEmpty ? parsed.baseClass : "\(variantScope):\(parsed.baseClass)"
+            let scopeLabel = variantScope.isEmpty ? "base scope" : "variant scope '\(variantScope)'"
+            diagnostics.append(
+                TailwindDuplicateDiagnostic(className: normalizedClass, scope: scopeLabel)
+            )
         }
 
         return diagnostics

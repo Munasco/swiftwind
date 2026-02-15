@@ -124,6 +124,13 @@ Text("Responsive")
     .tw(.w_1_2.md, .text_white.dark, .bg_zinc_800.hover)
 ```
 
+Typed `.tw(...)` input is linted at runtime for same-scope issues:
+
+- duplicate style in the same scope, e.g. `.tw(.bg(.red500), .bg_red_500)`
+- conflicting styles in the same scope, e.g. `.tw(.bg_red_500, .bg_blue_500)`
+
+Both emit warnings (same behavior as string-based `.tw("...")`).
+
 ### 5) Swift-style helper modifiers
 
 ```swift

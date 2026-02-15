@@ -38,3 +38,12 @@ tailwindcss/
 *.playground/
 *.playground/timeline.xctimeline
 *.playground/playground.xcworkspace
+
+# Website artifacts (website itself is a submodule)
+website/node_modules/
+website/dist/
+website/.astro/
+website/.vercel/
+
+# Agent memory prototype runtime store
+prototypes/agent-memory/.memory/

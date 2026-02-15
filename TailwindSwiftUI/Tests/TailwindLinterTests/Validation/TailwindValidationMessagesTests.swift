@@ -15,6 +15,11 @@ struct TailwindValidationMessagesTests {
         #expect(message == "Unknown Tailwind class 'foo-bar'")
     }
 
+    @Test func duplicateStyleMessage() {
+        let message = TailwindValidationMessages.duplicateStyle("bg-red-500", scope: "base scope")
+        #expect(message == "Duplicate style 'bg-red-500' in the same base scope.")
+    }
+
     @Test func unsupportedVariantMessage() {
         let message = TailwindValidationMessages.unsupportedVariant("foo")
         #expect(message.contains("Unsupported Tailwind variant 'foo:'"))

@@ -194,9 +194,7 @@ struct ColorPaletteExampleTW: View {
 
                 VStack(alignment: .leading, spacing: 16) {
                     Toggle("Emphasize sample chip", isOn: $emphasize)
-                        .tw(
-                            #styles("text-red-100 text-red-700")
-                        )
+                        .tw( .text(.slate700))
                         .tint(.pink500)
 
                     Button {

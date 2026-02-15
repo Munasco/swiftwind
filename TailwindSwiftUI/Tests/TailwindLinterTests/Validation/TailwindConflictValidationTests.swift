@@ -20,4 +20,13 @@ struct TailwindConflictValidationTests {
         )
         #expect(has)
     }
+
+    @Test func detectDuplicatesInSameScope() {
+        let duplicates = TailwindConflictValidation.detectDuplicates(
+            in: ["bg-red-500", "bg-red-500", "dark:bg-red-500", "dark:bg-red-500"]
+        )
+        #expect(duplicates.count == 2)
+        #expect(duplicates.contains { $0.className == "bg-red-500" && $0.scope == "base scope" })
+        #expect(duplicates.contains { $0.className == "dark:bg-red-500" && $0.scope == "variant scope 'dark'" })
+    }
 }

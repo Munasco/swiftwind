@@ -13,18 +13,8 @@ public struct TailwindClassesMacro: ExpressionMacro {
         }
 
         let classes = classString.split(separator: " ").map(String.init)
-        var seenClasses = Set<String>()
 
         for className in classes {
-            if seenClasses.contains(className) {
-                context.diagnose(Diagnostic(
-                    node: Syntax(node),
-                    message: TailwindDiagnostic.duplicateClass(className)
-                ))
-            } else {
-                seenClasses.insert(className)
-            }
-
             let parsed = TailwindClassParsing.parseVariantClass(className)
             let unsupportedVariants = TailwindVariantValidation.unsupportedVariants(in: className)
 
@@ -65,6 +55,16 @@ public struct TailwindClassesMacro: ExpressionMacro {
                     previous: conflict.previous,
                     current: conflict.current,
                     scope: conflict.scope
+                )
+            ))
+        }
+
+        for duplicate in TailwindConflictValidation.detectDuplicates(in: classes) {
+            context.diagnose(Diagnostic(
+                node: Syntax(node),
+                message: TailwindDiagnostic.duplicateStyle(
+                    className: duplicate.className,
+                    scope: duplicate.scope
                 )
             ))
         }
@@ -134,7 +134,7 @@ enum TailwindDiagnostic: DiagnosticMessage {
     case requiresStringLiteral
     case requiresStringLiteralInBuilder
     case unknownClass(String)
-    case duplicateClass(String)
+    case duplicateStyle(className: String, scope: String)
     case conflictingClasses(previous: String, current: String, scope: String)
     case unsupportedVariant(String)
     case layoutOnText(String)
@@ -148,8 +148,8 @@ enum TailwindDiagnostic: DiagnosticMessage {
             return "#styles builder accepts only string literal lines"
         case .unknownClass(let name):
             return TailwindValidationMessages.unknownClass(name)
-        case .duplicateClass(let name):
-            return "Duplicate Tailwind class '\(name)' in the same macro input"
+        case let .duplicateStyle(className, scope):
+            return TailwindValidationMessages.duplicateStyle(className, scope: scope)
         case let .conflictingClasses(previous, current, scope):
             return TailwindValidationMessages.conflictingStyles(previous: previous, current: current, scope: scope)
         case .unsupportedVariant(let name):
@@ -169,8 +169,8 @@ enum TailwindDiagnostic: DiagnosticMessage {
             return MessageID(domain: "TailwindSwiftUI", id: "requiresStringLiteralInBuilder")
         case .unknownClass:
             return MessageID(domain: "TailwindSwiftUI", id: "unknownClass")
-        case .duplicateClass:
-            return MessageID(domain: "TailwindSwiftUI", id: "duplicateClass")
+        case .duplicateStyle:
+            return MessageID(domain: "TailwindSwiftUI", id: "duplicateStyle")
         case .conflictingClasses:
             return MessageID(domain: "TailwindSwiftUI", id: "conflictingClasses")
         case .unsupportedVariant:
@@ -187,7 +187,7 @@ enum TailwindDiagnostic: DiagnosticMessage {
         case .requiresStringLiteral: return .error
         case .requiresStringLiteralInBuilder: return .error
         case .unknownClass: return .warning
-        case .duplicateClass: return .warning
+        case .duplicateStyle: return .warning
         case .conflictingClasses: return .warning
         case .unsupportedVariant: return .warning
         case .layoutOnText: return .error

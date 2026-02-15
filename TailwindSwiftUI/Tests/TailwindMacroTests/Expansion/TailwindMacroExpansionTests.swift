@@ -266,7 +266,7 @@ struct MacroInvalidTests {
             #"#styles("bg-slate-500 bg-slate-500 text-white")"#,
             expandedSource: #""bg-slate-500 bg-slate-500 text-white""#,
             diagnostics: [
-                DiagnosticSpec(message: "Duplicate Tailwind class 'bg-slate-500' in the same macro input", line: 1, column: 9, severity: .warning),
+                DiagnosticSpec(message: "Duplicate style 'bg-slate-500' in the same base scope.", line: 1, column: 9, severity: .warning),
             ],
             macros: testMacros
         )

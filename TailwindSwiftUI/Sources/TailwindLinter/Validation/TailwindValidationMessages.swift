@@ -7,6 +7,10 @@ public enum TailwindValidationMessages {
         "Conflicting styles '\(previous)' and '\(current)' in the same \(scope)."
     }
 
+    public static func duplicateStyle(_ className: String, scope: String) -> String {
+        "Duplicate style '\(className)' in the same \(scope)."
+    }
+
     public static var conflictingStylesAcrossChainedScopes: String {
         "Conflicting styles detected across chained .tw() scopes. Merge into one .tw { ... } block or remove conflicting classes."
     }

@@ -86,6 +86,10 @@ for filePath in args {
                 print("\(filePath):\(lineNum):\(col): warning: \(TailwindValidationMessages.conflictingStyles(previous: conflict.previous, current: conflict.current, scope: conflict.scope))")
             }
 
+            for duplicate in TailwindConflictValidation.detectDuplicates(in: classes) {
+                print("\(filePath):\(lineNum):\(col): warning: \(TailwindValidationMessages.duplicateStyle(duplicate.className, scope: duplicate.scope))")
+            }
+
             searchRange = closeQuote.upperBound..<line.endIndex
         }
     }

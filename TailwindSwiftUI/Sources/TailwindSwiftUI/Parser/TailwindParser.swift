@@ -109,6 +109,15 @@ public struct TailwindModifier<Content: View>: View {
     }
 
     fileprivate static func warnConflictingClasses(_ classes: [String]) {
+        for duplicate in TailwindConflictValidation.detectDuplicates(in: classes) {
+            TailwindLogger.warn(
+                TailwindValidationMessages.duplicateStyle(
+                    duplicate.className,
+                    scope: duplicate.scope
+                )
+            )
+        }
+
         for conflict in TailwindConflictValidation.detectConflicts(in: classes) {
             TailwindLogger.warn(
                 TailwindValidationMessages.conflictingStyles(
