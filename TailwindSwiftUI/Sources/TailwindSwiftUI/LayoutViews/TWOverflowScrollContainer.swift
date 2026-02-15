@@ -114,6 +114,7 @@ private struct TWUIKitOverflowScrollView: UIViewRepresentable {
         }
     }
 
+    @MainActor
     final class Coordinator {
         let hostingController = UIHostingController(rootView: AnyView(EmptyView()))
         var widthConstraint: NSLayoutConstraint?

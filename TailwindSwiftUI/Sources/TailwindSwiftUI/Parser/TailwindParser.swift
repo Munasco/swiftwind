@@ -740,6 +740,8 @@ public struct TailwindModifier<Content: View>: View {
         if let r = applyLayoutClass(className, to: view) { return r }
         if let r = applyBorderClass(className, to: view) { return r }
         if let r = applyEffectsClass(className, to: view) { return r }
+        if let r = applyFiltersClass(className, to: view) { return r }
+        if let r = applyTransitionsAnimationsClass(className, to: view) { return r }
         if let r = applyTransformClass(className, to: view) { return r }
         if let r = applyInteractivityClass(className, to: view) { return r }
         if let r = applyAccessibilityClass(className, to: view) { return r }

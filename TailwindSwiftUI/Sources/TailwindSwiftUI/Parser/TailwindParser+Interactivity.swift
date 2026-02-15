@@ -4,11 +4,13 @@ import SwiftUI
 extension TailwindModifier {
 
     func applyInteractivityClass(_ className: String, to view: AnyView) -> AnyView? {
+        #if os(macOS) || os(tvOS) || targetEnvironment(macCatalyst) // Cursor and pointer events are only supported on macOS, tvOS, and Mac Catalyst
         if isLayoutScopedInteractivityClass(className), TWViewType(from: Content.self) != .twView {
             return nil
         }
 
         // Cursor (macOS only for most)
+        #if os(macOS)
         switch className {
         case "cursor-auto", "cursor-default", "cursor-pointer", "cursor-wait",
              "cursor-text", "cursor-move", "cursor-help", "cursor-not-allowed",
@@ -24,6 +26,7 @@ extension TailwindModifier {
             return AnyView(view)
         default: break
         }
+        #endif
 
         // User select
         switch className {
@@ -104,7 +107,7 @@ extension TailwindModifier {
 
         // Caret color (handled in ParserColors)
         // Accent color (handled in ParserColors)
-
+    #endif
         return nil
     }
 
@@ -122,4 +125,5 @@ extension TailwindModifier {
         if className.hasPrefix("overscroll-") { return true }
         return false
     }
+   
 }
